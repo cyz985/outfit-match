@@ -17,6 +17,7 @@ function go(name) {
   navLinks.forEach(a => a.classList.toggle('active', a.dataset.go === name));
   document.getElementById('navLinks').classList.remove('open');
   window.scrollTo({ top: 0 });
+  if (name === 'library' && !libInited) { libInited = true; renderLib(); }
 }
 document.querySelectorAll('[data-go]').forEach(el => el.addEventListener('click', () => go(el.dataset.go)));
 document.getElementById('hamburger').addEventListener('click', () => document.getElementById('navLinks').classList.toggle('open'));
@@ -557,6 +558,7 @@ const LIB_VIS = {
   '异域服饰':'外国传统服饰平铺产品摄影，浅灰纯色背景，真实面料纹理，高清，无人物',
   '其他配饰':'配饰产品摄影，浅灰纯色背景，真实材质光泽，高清，无人物',
 };
+let libInited = false;
 let libFilter = '全部';
 const libFiltersEl = document.getElementById('libFilters');
 libFiltersEl.innerHTML = ['全部', ...new Set(LIB_ITEMS.map(i => i[1]))]
@@ -565,6 +567,12 @@ libFiltersEl.innerHTML = ['全部', ...new Set(LIB_ITEMS.map(i => i[1]))]
 let libQuery = '';
 const searchMetaEl = document.getElementById('libSearchMeta');
 const searchInput = document.getElementById('libSearchInput');
+
+/* 雪碧图：assets/lib/s1~s4.jpg，每张 8列×5行、单元格320px，40格 */
+const libSpriteStyle = i => {
+  const s = Math.floor(i / 40), p = i % 40;
+  return `background-image:url(assets/lib/s${s + 1}.jpg);background-position:${(p % 8) * 100 / 7}% ${Math.floor(p / 8) * 25}%`;
+};
 
 function cardHTML(it, detailed) {
   const [name, cat, fabric, , culture] = it;
@@ -575,7 +583,7 @@ function cardHTML(it, detailed) {
     <div class="d"><b>适用场景：</b>${LIB_DETAIL.scene[cat]}</div>
     ${culture ? `<div class="d"><b>文化背景：</b>${culture}</div>` : ''}` : '';
   return `<div class="lib-card" data-idx="${idx}">
-    <img loading="lazy" src="${LIB_P(idx)}" onerror="this.onerror=null;this.src=__fb" alt="${name}">
+    <div class="lib-img" style="${libSpriteStyle(idx)}" role="img" aria-label="${name}"></div>
     <div class="t"><b>${name}</b><span>${cat}</span>${detailLines}</div>
   </div>`;
 }
@@ -620,7 +628,7 @@ libFiltersEl.addEventListener('click', e => {
   searchInput.value = '';
   renderLib();
 });
-renderLib();
+/* 服装库卡片在首次进入该页面时渲染（雪碧图按需下载） */
 
 /* 详情弹窗 */
 const modal = document.getElementById('itemModal');
@@ -630,7 +638,7 @@ document.getElementById('libGrid').addEventListener('click', e => {
   const it = LIB_ITEMS[+card.dataset.idx];
   const [name, cat, fabric, pair, culture] = it;
   document.getElementById('modalBody').innerHTML = `
-    <img src="${LIB_P(+card.dataset.idx)}" onerror="this.onerror=null;this.src=__fb" alt="${name}">
+    <div class="mimg" style="${libSpriteStyle(+card.dataset.idx)}" role="img" aria-label="${name}"></div>
     <h3>${name}</h3><div class="cat-tag">${cat}</div>
     <dl>
       <dt>面料材质</dt><dd>${fabric}</dd>
