@@ -4,9 +4,9 @@ const IMG = (p, s) => `https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?
 /* 本地静态图片路径（全部预生成，秒开） */
 const pad3 = n => String(n).padStart(3, '0');
 const libIndex = name => LIB_ITEMS.findIndex(x => x[0] === name);
-const LIB_P = i => 'assets/lib/' + pad3(i + 1) + '.jpg';
+const LIB_P = i => 'assets/lib/' + pad3(i + 1) + '.jpg?v=2';
 const lpByName = n => LIB_P(libIndex(n));
-const INSPO_P = (tab, opt) => `assets/inspo/${tab}-${INSPO[tab].opts.indexOf(opt) + 1}.jpg`;
+const INSPO_P = (tab, opt) => `assets/inspo/${tab}-${INSPO[tab].opts.indexOf(opt) + 1}.jpg?v=2`;
 window.__fb = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect width='400' height='400' fill='%23eef2f0'/%3E%3Ctext x='200' y='206' fill='%239ca3af' font-size='18' text-anchor='middle' font-family='sans-serif'%3E图片暂无%3C/text%3E%3C/svg%3E";
 /* 图片兜底链：本地失败→jsDelivr→重试本地→占位图；18秒未加载完成自动切换，保证卡片不留空白 */
 const CDN_FB = 'https://cdn.jsdelivr.net/gh/cyz985/outfit-match@main/';
@@ -246,7 +246,7 @@ const SHOP = {
   '鞋履': [['小白鞋', '小白鞋', '鞋柜必备，搭一切']],
   '配饰': [['帆布托特包', '帆布包', '大容量日常通勤'], ['棒球帽', '棒球帽', '遮阳又增加造型感']],
 };
-const shopPath = v => v.startsWith('home:') ? 'assets/home/' + v.slice(5) + '.jpg' : lpByName(v);
+const shopPath = v => v.startsWith('home:') ? 'assets/home/' + v.slice(5) + '.jpg?v=2' : lpByName(v);
 const CASES = [
   ['简约日常', '白衬衫 + 直筒牛仔裤 + 小白鞋，清爽不费力', '年轻女性穿白色衬衫和蓝色直筒牛仔裤小白鞋的全身街拍，自然光，真实摄影'],
   ['优雅通勤', '卡其风衣 + 西装裤，利落有气场', '职场女性穿卡其色风衣和黑色西装裤的全身街拍，城市街道，真实摄影'],
@@ -256,7 +256,7 @@ const CASES = [
   ['复古牛仔', '牛仔外套叠穿，美式复古', '年轻人穿浅蓝牛仔外套和白T恤牛仔裤的全身街拍，真实摄影'],
 ];
 document.getElementById('caseGrid').innerHTML = CASES.map(([t, d], i) =>
-  `<div class="case-card"><img loading="lazy" data-local="assets/case/${i + 1}.jpg" src="assets/case/${i + 1}.jpg" onerror="__imgFb(this)" onload="this.dataset.ok=1" alt="${t}"><div class="body"><b>${t}</b><p>${d}</p></div></div>`).join('');
+  `<div class="case-card"><img loading="lazy" data-local="assets/case/${i + 1}.jpg?v=2" src="assets/case/${i + 1}.jpg?v=2" onerror="__imgFb(this)" onload="this.dataset.ok=1" alt="${t}"><div class="body"><b>${t}</b><p>${d}</p></div></div>`).join('');
 __armWatch(document.getElementById('caseGrid'));
 
 const INSPO = {
@@ -511,7 +511,7 @@ const LIB_ITEMS = [
 ];
 /* LIB_ITEMS 就绪后：渲染首页素材条与穿搭灵感初态 */
 document.getElementById('homeStrip').innerHTML = MATERIALS.map(([name], i) => {
-  const src = HOME_REF[i] ? lpByName(HOME_REF[i]) : 'assets/home/007.jpg';
+  const src = HOME_REF[i] ? lpByName(HOME_REF[i]) : 'assets/home/007.jpg?v=2';
   return `<div class="thumb"><img loading="lazy" src="${src}" data-local="${src}" onerror="__imgFb(this)" onload="this.dataset.ok=1" alt="${name}"><div class="cap">${name}</div></div>`;
 }).join('');
 __armWatch(document.getElementById('homeStrip'));
