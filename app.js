@@ -357,7 +357,44 @@ const LIB_ITEMS = [
   ['耳饰','首饰','银针防敏，轻盈款','与项链成套更精致'],
   ['手链','首饰','银/金细链，简约不抢眼','与手表叠戴或单独佩戴'],
   ['戒指','首饰','开口可调节，极简设计','日常通勤佩戴或多只叠戴'],
+
+  /* ===== 汉服 ===== */
+  ['齐胸襦裙','汉服','真丝/雪纺上襦+织锦长裙，轻薄飘逸','配团扇、披帛与花钿妆，适合国风拍摄与传统节日','唐制汉服代表，裙腰束于胸上，盛唐仕女常见装束','汉服 唐制 古风 古装 传统 襦裙 国风'],
+  ['交领襦裙','汉服','棉麻上襦+棉质长裙，素雅日常','可日常穿搭的入门汉服，配布鞋发簪','上衣交领右衽、下着长裙，宋明皆盛行','汉服 宋制 古风 日常 传统 襦裙'],
+  ['明制袄裙','汉服','提花绸袄+马面/褶裙，端庄保暖','配金饰与绒花，端庄贵气','明代典型女装，上袄下裙，立领端庄','汉服 明制 袄裙 古风 传统 立领'],
+  ['马面裙','汉服','织金马面裙，硬挺有骨架','配衬衫或袄衫，古今混搭也出彩','明清标志性裙装，前后四裙门、两侧打褶','汉服 马面裙 明制 织金 传统 古风'],
+  ['褙子','汉服','真丝/棉长款褙子，修长垂顺','配抹胸宋裤，清雅宋风','宋代流行的长款对襟外衣，修长雅致','汉服 宋制 褙子 古风 传统 对襟'],
+  ['圆领袍','汉服','织锦圆领袍，挺括有风骨','配革带皂靴，男女皆可穿','唐宋明官服与士人常服，圆领宽袍','汉服 圆领袍 古风 男装 传统'],
+  ['曲裾','汉服','锦缎深衣，缠绕束身','配玉佩组绶，典礼感强','汉代深衣形制，衣裾绕身而束','汉服 曲裾 深衣 汉制 古风 传统'],
+  ['对襟半臂','汉服','织锦短袖半臂，短小精致','叠穿于襦裙外增加层次','汉唐短袖外衣，类似今日短坎肩','汉服 半臂 唐制 古风 叠穿'],
+
+  /* ===== JK制服 / 水手服 ===== */
+  ['水手服','JK制服','TR面料上衣+百褶裙，挺括抗皱','配领结、中筒袜与制服鞋，日系校园','源自日式女学生校服，以水手领为标志','水手服 JK 制服 校服 学院风 日式 百褶裙'],
+  ['西式JK制服','JK制服','西装料衬衫+格裙+针织背心','配小领带与乐福鞋，乖巧减龄','日式西式校服体系，衬衫格裙为核心','JK 制服 西式 校服 学院风 格裙'],
+  ['JK格裙','JK制服','TR格纹百褶裙，褶子锋利','配衬衫针织衫，学院百搭','日式制服格纹百褶裙，配色款式繁多','JK 格裙 百褶裙 制服 学院风'],
+  ['JK针织背心','JK制服','棉质针织背心，柔软保暖','叠穿衬衫外，乖巧学院','日式制服常见的针织马甲','JK 背心 针织 制服 学院风 叠穿'],
+
+  /* ===== 国内少数民族服饰 ===== */
+  ['苗族盛装','民族服饰','苗锦刺绣衣+大量银冠银饰，华丽隆重','银饰叮当，适合节庆与民族写真','苗族节庆盛装，以银角银冠、蜡染刺绣闻名','少数民族 民族服饰 苗族 银饰 刺绣 贵州 传统'],
+  ['藏族藏袍','民族服饰','厚毛呢/氆氇长袍，保暖挡风','配邦典围裙与长靴，高原风情','藏族传统长袍，宽腰长袖、袒臂一袖是特色','少数民族 民族服饰 藏族 藏袍 高原 传统'],
+  ['维吾尔族连衣裙','民族服饰','艾德莱斯绸，鲜亮有光泽','配小花帽与长辫，热情明快','维吾尔族经典丝绸服饰，纹样绚丽如彩虹','少数民族 民族服饰 维吾尔族 新疆 艾德莱斯 丝绸'],
+  ['蒙古族蒙古袍','民族服饰','绸缎面+羊羔皮，厚实御寒','配腰带马靴，草原豪迈','蒙古族传统长袍，宽腰带便于骑乘','少数民族 民族服饰 蒙古族 草原 蒙古袍'],
+  ['朝鲜族服饰','民族服饰','丝质短衣长裙，轻盈淡雅','配船型鞋与盘发，温婉雅致','中国朝鲜族传统服饰，短衣斜襟、长裙垂坠','少数民族 民族服饰 朝鲜族 长裙 传统'],
+  ['壮族绣花衣','民族服饰','棉织壮锦+手工绣花，色彩浓郁','配银镯绣鞋，山歌节庆','壮族以壮锦和刺绣闻名，纹样取材自然','少数民族 民族服饰 壮族 壮锦 刺绣 广西'],
+  ['彝族察尔瓦','民族服饰','羊毛披毡，厚实防风','披于外衣外，昼夜御寒','彝族标志性羊毛披毡，形似斗篷','少数民族 民族服饰 彝族 披毡 羊毛 传统'],
+  ['满族旗袍','民族服饰','锦缎修身，盘扣滚边','配高跟布鞋，典雅曲线','满族传统旗装演变而来，是近代旗袍之源','少数民族 民族服饰 满族 旗袍 旗装 传统'],
+
+  /* ===== 外国传统服饰 ===== */
+  ['日本和服','异域服饰','正绢丝绸，腰带华丽','配木簪布袜木屐，郑重典雅','日本传统服装，宽袖长袍、腰带(obi)繁复','外国 传统 日本 和服 异域 浴衣'],
+  ['韩国韩服','异域服饰','丝绸交领短衣+蓬裙，柔和雅致','配绣花鞋，端庄温婉','朝鲜半岛传统服饰，曲线优雅、色彩柔和','外国 传统 韩国 韩服 异域 长裙'],
+  ['印度纱丽','异域服饰','丝绸/棉长幅布料，镶金边','配短上衣与大量首饰，明艳夺目','印度女性以数米长布缠身而成的传统服饰','外国 传统 印度 纱丽 异域 丝绸'],
+  ['苏格兰裙','异域服饰','格纹羊毛呢，硬挺保暖','配长袜皮鞋，英伦传统','苏格兰男性传统格纹裙(kilt)，每氏族有专属格纹','外国 传统 苏格兰 格纹 羊毛 裙 英伦'],
+  ['墨西哥绣花裙','异域服饰','棉质刺绣，色彩浓烈','配大耳环，热情奔放','墨西哥传统女装，手工花卉刺绣闻名','外国 传统 墨西哥 刺绣 绣花 异域'],
+  ['阿拉伯长袍','异域服饰','轻薄棉麻，宽松透气','配头巾，遮阳隔热','中东传统长袍，宽松设计适应沙漠气候','外国 传统 阿拉伯 长袍 中东 异域'],
+  ['越南奥黛','异域服饰','丝绸长衫+长裤，开叉飘逸','配斗笠，温婉修长','越南国服，长衫侧开叉配长裤','外国 传统 越南 奥黛 丝绸 长衫'],
+  ['弗拉门戈舞裙','异域服饰','多层荷叶边，摆动有力','配高跟舞鞋与红花，热烈激昂','西班牙弗拉门戈舞裙，层层荷叶边随舞摆动','外国 传统 西班牙 弗拉门戈 舞裙 异域'],
 ];
+/* 数组结构：[名称, 品类, 面料, 搭配/风格, 文化背景?, 关键词?] */
 const LIB_DETAIL = {
   care: {
     '上衣':'30℃以下轻柔机洗或手洗，深浅分开，平铺晾干避免暴晒。',
@@ -371,6 +408,10 @@ const LIB_DETAIL = {
     '围巾丝巾':'丝巾建议手洗或干洗、低温熨烫；针织围巾平铺晾干。',
     '腰带袜子':'袜子常规机洗；腰带湿布擦拭、避免弯折存放。',
     '首饰':'避免接触香水与汗液，摘下后软布擦拭，单独密封存放。',
+    '汉服':'建议干洗或轻柔手洗，真丝款反面冷水洗涤、低温熨烫，平铺阴干。',
+    'JK制服':'轻柔机洗装洗衣袋，保持褶裥垂顺，悬挂晾干。',
+    '民族服饰':'刺绣银饰款建议干洗或局部手洗，洗涤前取下可拆卸饰品。',
+    '异域服饰':'丝质款干洗或手洗，棉麻款轻柔机洗，避免暴晒褪色。',
   },
   fit: {
     '上衣':'常规合身版型，肩线与袖长决定整体精神度。',
@@ -384,6 +425,10 @@ const LIB_DETAIL = {
     '围巾丝巾':'尺寸适中易造型，轻薄保暖兼顾。',
     '腰带袜子':'腰带为常规孔位；袜子弹力大不勒脚。',
     '首饰':'常规链长，轻盈不挑人，敏感肌可选防敏材质。',
+    '汉服':'传统平面剪裁，宽松不贴身，以腰带调节比例，高矮皆可穿。',
+    'JK制服':'合身短上衣+高腰百褶格裙，优化身材比例，显高减龄。',
+    '民族服饰':'传统宽松剪裁，配饰丰富，以腰带或披挂塑造造型。',
+    '异域服饰':'各国传统版型差异大，以宽袍、缠裹或收腰长裙为主。',
   },
   scene: {
     '上衣':'日常上课、通勤、约会、居家。','外套':'通勤、出行、约会、户外活动。',
@@ -392,6 +437,10 @@ const LIB_DETAIL = {
     '包包':'上课、通勤、逛街、短途出行。','帽子':'出行、逛街、运动、度假。',
     '围巾丝巾':'通勤、出行、办公室空调房、造型点缀。','腰带袜子':'日常、运动、通勤、造型叠穿。',
     '首饰':'约会、聚会、通勤、节日礼物。',
+    '汉服':'传统节日、国风拍摄、汉服活动、日常混搭。',
+    'JK制服':'校园日常、上课、漫展、主题聚会。',
+    '民族服饰':'民族节庆、文化活动、旅拍写真、表演。',
+    '异域服饰':'文化主题活动、旅拍、节日庆典、演出。',
   },
 };
 const LIB_VIS = {
@@ -401,6 +450,10 @@ const LIB_VIS = {
   '围巾丝巾':'丝巾围巾产品摄影，浅灰纯色背景，丝滑垂坠质感，高清，无人物',
   '腰带袜子':'腰带袜子产品摄影，浅灰纯色背景，高清，无人物',
   '首饰':'首饰产品摄影，浅灰纯色背景，真实金属光泽，高清，无人物',
+  '汉服':'汉服平铺产品摄影，传统织锦刺绣面料，浅灰纯色背景，真实褶皱质感，高清，无人物',
+  'JK制服':'日式JK制服平铺产品摄影，百褶裙挺括，浅灰纯色背景，真实面料质感，高清，无人物',
+  '民族服饰':'中国少数民族传统服饰平铺展示，刺绣银饰细节，浅灰纯色背景，真实摄影，高清，无人物',
+  '异域服饰':'外国传统服饰平铺产品摄影，浅灰纯色背景，真实面料纹理，高清，无人物',
 };
 const libImg = it => IMG(it[0] + '，' + (LIB_VIS[it[1]] || '服装平铺产品摄影，浅灰纯色背景，真实面料褶皱质感，高清，无人物'));
 let libFilter = '全部';
@@ -408,18 +461,63 @@ const libFiltersEl = document.getElementById('libFilters');
 libFiltersEl.innerHTML = ['全部', ...new Set(LIB_ITEMS.map(i => i[1]))]
   .map(c => `<button class="pill ${c === '全部' ? 'active' : ''}">${c}</button>`).join('');
 
-function renderLib() {
-  const list = libFilter === '全部' ? LIB_ITEMS : LIB_ITEMS.filter(i => i[1] === libFilter);
-  document.getElementById('libGrid').innerHTML = list.map((it, idx) => `
-    <div class="lib-card" data-idx="${LIB_ITEMS.indexOf(it)}">
-      <img loading="lazy" src="${libImg(it)}" alt="${it[0]}">
-      <div class="t"><b>${it[0]}</b><span>${it[1]}</span></div>
-    </div>`).join('');
+let libQuery = '';
+const searchMetaEl = document.getElementById('libSearchMeta');
+const searchInput = document.getElementById('libSearchInput');
+
+function cardHTML(it, detailed) {
+  const [name, cat, fabric, , culture] = it;
+  const detailLines = detailed ? `
+    <div class="d"><b>面料：</b>${fabric}</div>
+    <div class="d"><b>风格：</b>${cat}</div>
+    <div class="d"><b>适用场景：</b>${LIB_DETAIL.scene[cat]}</div>
+    ${culture ? `<div class="d"><b>文化背景：</b>${culture}</div>` : ''}` : '';
+  return `<div class="lib-card" data-idx="${LIB_ITEMS.indexOf(it)}">
+    <img loading="lazy" src="${libImg(it)}" alt="${name}">
+    <div class="t"><b>${name}</b><span>${cat}</span>${detailLines}</div>
+  </div>`;
 }
+
+function renderLib() {
+  if (libQuery) {
+    // 模糊匹配：名称/品类/面料/搭配/文化/关键词，多词AND
+    const ALIAS = { '民族':'民族服饰', '和风':'和服', '古装':'古风', '校服':'制服' };
+    const terms = libQuery.split(/\s+/).filter(Boolean).map(t => {
+      t = t.toLowerCase();
+      return Object.keys(ALIAS).some(k => t.includes(k)) ? ALIAS[Object.keys(ALIAS).find(k => t.includes(k))].toLowerCase() : t;
+    });
+    const hits = LIB_ITEMS.filter(it => {
+      const hay = it.join(' ').toLowerCase();
+      return terms.every(t => hay.includes(t));
+    });
+    searchMetaEl.textContent = `搜索「${searchInput.value.trim()}」，找到 ${hits.length} 件相关单品`;
+    searchMetaEl.classList.remove('hidden');
+    document.getElementById('libGrid').innerHTML = hits.length
+      ? hits.map(it => cardHTML(it, true)).join('')
+      : `<div class="empty" style="grid-column:1/-1">没有找到相关衣物，试试「汉服」「水手服」「民族」「和服」等关键词</div>`;
+    return;
+  }
+  searchMetaEl.classList.add('hidden');
+  const list = libFilter === '全部' ? LIB_ITEMS : LIB_ITEMS.filter(i => i[1] === libFilter);
+  document.getElementById('libGrid').innerHTML = list.map(it => cardHTML(it, false)).join('');
+}
+
+function runSearch() {
+  libQuery = searchInput.value.trim().replace(/\s+/g, ' ');
+  libFiltersEl.querySelectorAll('.pill').forEach(p => p.classList.toggle('active', p.textContent === '全部'));
+  libFilter = '全部';
+  renderLib();
+}
+document.getElementById('libSearchBtn').addEventListener('click', runSearch);
+searchInput.addEventListener('keydown', e => { if (e.key === 'Enter') runSearch(); });
+searchInput.addEventListener('search', () => { if (!searchInput.value) { libQuery = ''; renderLib(); } });
+
 libFiltersEl.addEventListener('click', e => {
   const p = e.target.closest('.pill');
   if (!p) return;
   libFilter = p.textContent;
+  libQuery = '';
+  searchInput.value = '';
   renderLib();
 });
 renderLib();
@@ -430,7 +528,7 @@ document.getElementById('libGrid').addEventListener('click', e => {
   const card = e.target.closest('.lib-card');
   if (!card) return;
   const it = LIB_ITEMS[+card.dataset.idx];
-  const [name, cat, fabric, pair] = it;
+  const [name, cat, fabric, pair, culture] = it;
   document.getElementById('modalBody').innerHTML = `
     <img src="${libImg(it)}" alt="${name}">
     <h3>${name}</h3><div class="cat-tag">${cat}</div>
@@ -440,6 +538,7 @@ document.getElementById('libGrid').addEventListener('click', e => {
       <dt>版型特点</dt><dd>${LIB_DETAIL.fit[cat]}</dd>
       <dt>适用场景</dt><dd>${LIB_DETAIL.scene[cat]}</dd>
       <dt>搭配建议</dt><dd>${pair}</dd>
+      ${culture ? `<dt>文化背景</dt><dd>${culture}</dd>` : ''}
     </dl>`;
   modal.classList.remove('hidden');
   addRecord('browse', name, null, libImg(it));

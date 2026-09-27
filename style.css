@@ -199,6 +199,17 @@ img { max-width:100%; display:block; }
 .lib-card .t b { display:block; }
 .lib-card .t span { color:var(--muted); font-size:12px; }
 
+/* ===== 搜索框 ===== */
+.search-bar { display:flex; gap:8px; max-width:500px; margin-bottom:6px; }
+.search-bar input {
+  flex:1; min-width:0; padding:10px 18px; border:1.5px solid var(--border);
+  border-radius:999px; font-size:14px; background:#fff;
+}
+.search-bar input:focus { outline:none; border-color:var(--g); }
+.search-meta { color:var(--g2); font-size:13px; margin:4px 0 10px; font-weight:600; }
+.lib-card .d { font-size:12px; color:var(--sub); line-height:1.5; margin-top:3px; }
+.lib-card .d b { color:var(--text); font-weight:600; }
+
 /* ===== 详情弹窗 ===== */
 .modal-mask { position:fixed; inset:0; background:rgba(17,24,39,.5); display:flex; align-items:center; justify-content:center; z-index:200; padding:16px; }
 .modal { background:#fff; border-radius:20px; max-width:560px; width:100%; max-height:86vh; overflow-y:auto; position:relative; }
