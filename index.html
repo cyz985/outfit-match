@@ -17,8 +17,10 @@
     <button class="hamburger" id="hamburger" aria-label="菜单">☰</button>
     <div class="nav-links" id="navLinks">
       <a class="nav-link active" data-go="home">首页</a>
+      <a class="nav-link" data-go="library">服装库</a>
       <a class="nav-link" data-go="room">穿搭搭配室</a>
       <a class="nav-link" data-go="inspo">穿搭灵感</a>
+      <a class="nav-link" data-go="records">使用记录</a>
       <a class="nav-link" data-go="about">项目介绍</a>
       <button class="btn btn-primary nav-cta" data-go="room">开始搭配</button>
     </div>
@@ -61,7 +63,36 @@
       </div>
 
       <div class="step">
-        <div class="step-head"><span class="step-no">2</span><h2>填写你的信息</h2></div>
+        <div class="step-head"><span class="step-no">2</span><h2>我的衣橱 · 批量智能组合</h2><small>可一次选择多张照片，自动抠图拼合</small></div>
+        <div class="batch-bar">
+          <select id="batchCat">
+            <option value="top">上衣</option>
+            <option value="outer">外套</option>
+            <option value="bottom">裤装</option>
+            <option value="bottom">半裙</option>
+            <option value="dress">连衣裙</option>
+            <option value="shoes">鞋履</option>
+            <option value="bag">包包</option>
+            <option value="hat">帽子</option>
+            <option value="scarf">围巾丝巾</option>
+            <option value="socks">腰带袜子</option>
+            <option value="jewel">首饰</option>
+          </select>
+          <label class="btn btn-outline">选择照片（可多选）
+            <input type="file" id="batchInput" accept="image/*" multiple hidden>
+          </label>
+          <span class="tip" id="batchTip">建议背景简洁的平铺照片，抠图效果最佳</span>
+        </div>
+        <div class="my-items" id="myItems"></div>
+        <div class="gen-btns" style="margin-top:14px">
+          <button class="btn btn-primary btn-lg" id="btnMatch">生成搭配推荐</button>
+        </div>
+        <div id="matchLoading" class="loading hidden"><span class="spinner"></span>正在为你生成智能搭配，请稍候</div>
+        <div class="match-grid" id="matchGrid"></div>
+      </div>
+
+      <div class="step">
+        <div class="step-head"><span class="step-no">3</span><h2>填写你的信息</h2></div>
         <form class="form" id="userForm" onsubmit="return false">
           <div class="field">
             <label>性别</label>
@@ -116,7 +147,7 @@
       </div>
 
       <div class="step">
-        <div class="step-head"><span class="step-no">3</span><h2>生成方案</h2></div>
+        <div class="step-head"><span class="step-no">4</span><h2>生成方案</h2></div>
         <div class="gen-btns">
           <button class="btn btn-primary btn-lg" id="btnPlan">生成我的穿搭方案</button>
           <button class="btn btn-outline btn-lg" id="btnEffect">生成穿搭效果图</button>
@@ -130,6 +161,16 @@
           </div>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- 服装库 -->
+  <section class="page" id="page-library">
+    <div class="section">
+      <h1 class="page-title">服装库</h1>
+      <p class="section-sub">54 款真实单品 · 点击卡片查看面料、保养、版型与搭配详情</p>
+      <div class="pills" id="libFilters"></div>
+      <div class="lib-grid" id="libGrid"></div>
     </div>
   </section>
 
@@ -155,6 +196,16 @@
     </div>
   </section>
 
+  <!-- 使用记录 -->
+  <section class="page" id="page-records">
+    <div class="section">
+      <h1 class="page-title">使用记录</h1>
+      <p class="section-sub">记录仅保存在本地浏览器，清除浏览器缓存会清空</p>
+      <button class="btn btn-outline" id="clearRecords">一键清空全部记录</button>
+      <div class="record-list" id="recordList"></div>
+    </div>
+  </section>
+
   <!-- 项目介绍 -->
   <section class="page" id="page-about">
     <div class="section about">
@@ -172,6 +223,14 @@
 </main>
 
 <footer class="footer">衣拍即合 · 让每一件衣服都拍得其所</footer>
+
+<!-- 服装详情弹窗 -->
+<div class="modal-mask hidden" id="itemModal">
+  <div class="modal">
+    <button class="modal-close" id="modalClose" aria-label="关闭">×</button>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
 
 <script src="app.js"></script>
 </body>

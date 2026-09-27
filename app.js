@@ -299,3 +299,403 @@ document.getElementById('inspoPills').addEventListener('click', e => {
   renderInspo();
 });
 renderInspo();
+
+/* ================= 服装库（54 款真实单品） ================= */
+// [名称, 品类, 面料材质, 搭配建议]
+const LIB_ITEMS = [
+  ['短袖T恤','上衣','纯棉针织，柔软透气','配牛仔裤与小白鞋，经典不出错'],
+  ['长袖T恤','上衣','纯棉/莫代尔，亲肤有弹性','作内搭配马甲、风衣，或单穿配直筒裤'],
+  ['针织衫','上衣','羊毛混纺针织，细腻保暖','配半裙乐福鞋，温柔通勤'],
+  ['毛衣','上衣','粗针织羊毛，蓬松保暖','配阔腿裤短靴，冬日有层次'],
+  ['衬衫','上衣','精梳棉/天丝，挺括垂顺','配西装裤通勤，或敞开当薄外套'],
+  ['吊带背心','上衣','棉混/真丝，贴身顺滑','单穿配高腰裤，或内搭西装'],
+  ['连帽卫衣','上衣','加绒棉质针织，宽松舒适','配工装裤运动鞋，街头休闲'],
+  ['牛仔外套','外套','重磅牛仔布，硬挺有型','配连衣裙或T恤牛仔裤，复古百搭'],
+  ['西装外套','外套','聚酯混纺精纺，垂坠挺括','配衬衫西装裤，也可搭卫衣休闲化'],
+  ['风衣','外套','棉嘎巴甸，防风有骨架','内搭针织衫直筒裤，利落通勤'],
+  ['毛呢大衣','外套','羊毛混纺呢料，厚实保暖','配高领毛衣与直筒裤，冬日气场'],
+  ['羽绒服','外套','高蓬羽绒+防泼水面料','配卫衣运动裤，轻便保暖'],
+  ['皮夹克','外套','头层牛皮/仿皮，硬朗有光泽','配碎花裙或白T牛仔裤，甜酷平衡'],
+  ['马甲','外套','针织/羽绒填充，无袖叠穿利器','叠在衬衫或卫衣外增加层次'],
+  ['棒球服','外套','毛呢拼PU袖，学院运动感','配束脚裤与棒球帽，街头减龄'],
+  ['阔腿裤','裤装','垂坠西装料，宽松显高','配短上衣或衬衫塞腰，显腿长'],
+  ['直筒牛仔裤','裤装','重磅牛仔，微弹修饰腿型','配T恤或衬衫与小白鞋'],
+  ['西装裤','裤装','垂感精纺，挺括显瘦','配衬衫西装，通勤首选'],
+  ['运动裤','裤装','棉质针织，束脚舒适','配卫衣运动鞋，休闲运动'],
+  ['紧身牛仔裤','裤装','弹力牛仔，贴合腿型','配宽松卫衣或长靴，松紧平衡'],
+  ['工装裤','裤装','斜纹棉，多口袋挺括','配短上衣马丁靴，街头机能'],
+  ['短裤','裤装','棉/牛仔，清凉利落','配T恤或长袜帆布鞋，夏日休闲'],
+  ['半身长裙','半裙','雪纺/针织，垂坠飘逸','配短款针织衫与乐福鞋'],
+  ['半身短裙','半裙','斜纹/牛仔，活泼显腿长','配卫衣或衬衫，减龄学院'],
+  ['A字裙','半裙','西装料，上窄下宽遮胯','配衬衫或针织衫，通勤约会'],
+  ['百褶裙','半裙','TR/针织，压褶垂顺','配针织开衫乐福鞋，学院风'],
+  ['包臀裙','半裙','针织弹力，贴合曲线','配宽松衬衫或西装，轻熟风'],
+  ['碎花连衣裙','连衣裙','雪纺/棉，轻盈浪漫','单穿配帆布鞋，外搭牛仔外套'],
+  ['衬衫裙','连衣裙','棉质府绸，直筒利落','配腰带乐福鞋，可盐可甜'],
+  ['吊带裙','连衣裙','缎面/雪纺，柔媚垂顺','单穿配凉鞋，或叠穿T恤'],
+  ['运动连衣裙','连衣裙','速干针织，轻盈好活动','配运动鞋棒球帽，元气减龄'],
+  ['针织连衣裙','连衣裙','包芯纱针织，贴身保暖','配大衣长靴，温柔冬日'],
+  ['乐福鞋','鞋履','牛皮/PU，低跟好穿','配半裙、西装裤皆可'],
+  ['小白鞋','鞋履','帆布/牛皮，平底百搭','与一切休闲装匹配'],
+  ['帆布鞋','鞋履','硫化帆布，轻便耐穿','配牛仔裤或连衣裙'],
+  ['马丁靴','鞋履','牛皮硬挺，8孔系带','配工装裤或碎花裙，酷感'],
+  ['高跟鞋','鞋履','羊皮/漆皮，尖头细跟','配包臀裙或西装裤，气场'],
+  ['运动鞋','鞋履','网面+缓震底，舒适','配运动套装或牛仔裤'],
+  ['帆布包','包包','重磅帆布，轻便能装','日常上课首选，配休闲装'],
+  ['托特包','包包','帆布/牛皮，硬挺大容量','通勤装电脑，简约大气'],
+  ['腋下包','包包','牛皮/PU，小巧精致','配连衣裙或西装，法式'],
+  ['斜挎包','包包','尼龙/牛皮，轻便解放双手','出行逛街，休闲百搭'],
+  ['棒球帽','帽子','棉布，可调节帽围','配卫衣运动装，遮阳减龄'],
+  ['贝雷帽','帽子','羊毛呢，复古画家感','配针织衫大衣，复古造型'],
+  ['毛线帽','帽子','针织毛线，保暖包裹','配羽绒服毛衣，冬日必备'],
+  ['丝巾','围巾丝巾','真丝缎面，丝滑有光泽','系颈间或绑包柄，点亮造型'],
+  ['围巾','围巾丝巾','羊毛/羊绒，柔软保暖','配大衣风衣，温柔有层次'],
+  ['腰带','腰带袜子','牛皮/帆布，经典针扣','强调腰线，配西装裤或裙装'],
+  ['长袜','腰带袜子','精梳棉，弹力长筒','配短裤短裙帆布鞋，学院'],
+  ['堆堆袜','腰带袜子','棉质针织，松软堆叠','配乐福鞋或马丁靴，日系'],
+  ['项链','首饰','925银/镀金，纤细百搭','配V领或圆领，修饰颈线'],
+  ['耳饰','首饰','银针防敏，轻盈款','与项链成套更精致'],
+  ['手链','首饰','银/金细链，简约不抢眼','与手表叠戴或单独佩戴'],
+  ['戒指','首饰','开口可调节，极简设计','日常通勤佩戴或多只叠戴'],
+];
+const LIB_DETAIL = {
+  care: {
+    '上衣':'30℃以下轻柔机洗或手洗，深浅分开，平铺晾干避免暴晒。',
+    '外套':'建议干洗或轻柔洗涤；毛呢、皮革请干洗，收纳前清洁并用防尘袋。',
+    '裤装':'反面冷水洗涤减少掉色，少用柔顺剂，悬挂或平铺晾干。',
+    '半裙':'轻柔手洗或装洗衣袋机洗，避免拧绞，悬挂晾干。',
+    '连衣裙':'轻柔洗涤，易变形款平铺晾干，深浅分开。',
+    '鞋履':'避免长时间浸水，湿布擦拭后阴干，皮质需定期保养。',
+    '包包':'湿布局部擦拭，避免暴晒重压，长期不用塞入填充物。',
+    '帽子':'局部清洁，帽檐避免重压变形，通风阴干。',
+    '围巾丝巾':'丝巾建议手洗或干洗、低温熨烫；针织围巾平铺晾干。',
+    '腰带袜子':'袜子常规机洗；腰带湿布擦拭、避免弯折存放。',
+    '首饰':'避免接触香水与汗液，摘下后软布擦拭，单独密封存放。',
+  },
+  fit: {
+    '上衣':'常规合身版型，肩线与袖长决定整体精神度。',
+    '外套':'廓形略宽松，内搭毛衣也有空间，落肩设计更休闲。',
+    '裤装':'中高腰直筒版型，修饰腿型，裤长以轻触鞋面为佳。',
+    '半裙':'中高腰设计，裙型垂顺，长度建议膝盖附近或小腿中下段。',
+    '连衣裙':'收腰/直筒版型，腰线位置决定显高效果。',
+    '鞋履':'标准鞋楦，脚宽建议大半码，鞋底软硬适中久穿不累。',
+    '包包':'结构挺括，容量分层实用，肩带可调节。',
+    '帽子':'帽围可微调，帽檐宽度适中，修饰脸型。',
+    '围巾丝巾':'尺寸适中易造型，轻薄保暖兼顾。',
+    '腰带袜子':'腰带为常规孔位；袜子弹力大不勒脚。',
+    '首饰':'常规链长，轻盈不挑人，敏感肌可选防敏材质。',
+  },
+  scene: {
+    '上衣':'日常上课、通勤、约会、居家。','外套':'通勤、出行、约会、户外活动。',
+    '裤装':'日常、通勤、出行、运动。','半裙':'约会、聚会、上课、通勤。',
+    '连衣裙':'约会、聚会、度假、通勤。','鞋履':'通勤、上课、约会、出行。',
+    '包包':'上课、通勤、逛街、短途出行。','帽子':'出行、逛街、运动、度假。',
+    '围巾丝巾':'通勤、出行、办公室空调房、造型点缀。','腰带袜子':'日常、运动、通勤、造型叠穿。',
+    '首饰':'约会、聚会、通勤、节日礼物。',
+  },
+};
+const LIB_VIS = {
+  '鞋履':'一双鞋履产品摄影，浅灰纯色背景，真实材质质感，高清，无人物',
+  '包包':'包包产品摄影，浅灰纯色背景，真实材质纹理，高清，无人物',
+  '帽子':'帽子产品摄影，浅灰纯色背景，真实材质，高清，无人物',
+  '围巾丝巾':'丝巾围巾产品摄影，浅灰纯色背景，丝滑垂坠质感，高清，无人物',
+  '腰带袜子':'腰带袜子产品摄影，浅灰纯色背景，高清，无人物',
+  '首饰':'首饰产品摄影，浅灰纯色背景，真实金属光泽，高清，无人物',
+};
+const libImg = it => IMG(it[0] + '，' + (LIB_VIS[it[1]] || '服装平铺产品摄影，浅灰纯色背景，真实面料褶皱质感，高清，无人物'));
+let libFilter = '全部';
+const libFiltersEl = document.getElementById('libFilters');
+libFiltersEl.innerHTML = ['全部', ...new Set(LIB_ITEMS.map(i => i[1]))]
+  .map(c => `<button class="pill ${c === '全部' ? 'active' : ''}">${c}</button>`).join('');
+
+function renderLib() {
+  const list = libFilter === '全部' ? LIB_ITEMS : LIB_ITEMS.filter(i => i[1] === libFilter);
+  document.getElementById('libGrid').innerHTML = list.map((it, idx) => `
+    <div class="lib-card" data-idx="${LIB_ITEMS.indexOf(it)}">
+      <img loading="lazy" src="${libImg(it)}" alt="${it[0]}">
+      <div class="t"><b>${it[0]}</b><span>${it[1]}</span></div>
+    </div>`).join('');
+}
+libFiltersEl.addEventListener('click', e => {
+  const p = e.target.closest('.pill');
+  if (!p) return;
+  libFilter = p.textContent;
+  renderLib();
+});
+renderLib();
+
+/* 详情弹窗 */
+const modal = document.getElementById('itemModal');
+document.getElementById('libGrid').addEventListener('click', e => {
+  const card = e.target.closest('.lib-card');
+  if (!card) return;
+  const it = LIB_ITEMS[+card.dataset.idx];
+  const [name, cat, fabric, pair] = it;
+  document.getElementById('modalBody').innerHTML = `
+    <img src="${libImg(it)}" alt="${name}">
+    <h3>${name}</h3><div class="cat-tag">${cat}</div>
+    <dl>
+      <dt>面料材质</dt><dd>${fabric}</dd>
+      <dt>清洗保养</dt><dd>${LIB_DETAIL.care[cat]}</dd>
+      <dt>版型特点</dt><dd>${LIB_DETAIL.fit[cat]}</dd>
+      <dt>适用场景</dt><dd>${LIB_DETAIL.scene[cat]}</dd>
+      <dt>搭配建议</dt><dd>${pair}</dd>
+    </dl>`;
+  modal.classList.remove('hidden');
+  addRecord('browse', name, null, libImg(it));
+});
+const closeModal = () => modal.classList.add('hidden');
+document.getElementById('modalClose').addEventListener('click', closeModal);
+modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+/* ================= 本地抠图（边缘连通去背景） ================= */
+function cutout(img) {
+  const maxD = 620;
+  const sc = Math.min(1, maxD / Math.max(img.width, img.height));
+  const w = Math.max(2, Math.round(img.width * sc)), h = Math.max(2, Math.round(img.height * sc));
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  const ctx = c.getContext('2d', { willReadFrequently: true });
+  ctx.drawImage(img, 0, 0, w, h);
+  const imgData = ctx.getImageData(0, 0, w, h), d = imgData.data, N = w * h;
+
+  let r = 0, g = 0, b = 0;
+  const samples = [];
+  const add = (x, y) => { const i = (y * w + x) * 4; samples.push([d[i], d[i + 1], d[i + 2]]); };
+  for (let x = 0; x < w; x += 3) { add(x, 0); add(x, h - 1); }
+  for (let y = 0; y < h; y += 3) { add(0, y); add(w - 1, y); }
+  samples.forEach(p => { r += p[0]; g += p[1]; b += p[2]; });
+  r /= samples.length; g /= samples.length; b /= samples.length;
+  let spread = 0;
+  samples.forEach(p => spread += Math.abs(p[0] - r) + Math.abs(p[1] - g) + Math.abs(p[2] - b));
+  spread /= samples.length;
+  const T = Math.max(26, Math.min(85, spread * 1.6 + 20));
+  const dist = i => Math.abs(d[i] - r) + Math.abs(d[i + 1] - g) + Math.abs(d[i + 2] - b);
+
+  const bg = new Uint8Array(N);
+  const stack = [];
+  const seed = (x, y) => { const idx = y * w + x; if (!bg[idx] && dist(idx * 4) <= T * 1.2) { bg[idx] = 1; stack.push(idx); } };
+  for (let x = 0; x < w; x++) { seed(x, 0); seed(x, h - 1); }
+  for (let y = 0; y < h; y++) { seed(0, y); seed(w - 1, y); }
+  while (stack.length) {
+    const idx = stack.pop(), x = idx % w, y = (idx / w) | 0;
+    const nb = [x > 0 ? idx - 1 : -1, x < w - 1 ? idx + 1 : -1, y > 0 ? idx - w : -1, y < h - 1 ? idx + w : -1];
+    for (const j of nb) if (j >= 0 && !bg[j] && dist(j * 4) <= T) { bg[j] = 1; stack.push(j); }
+  }
+  for (let idx = 0; idx < N; idx++) if (bg[idx]) d[idx * 4 + 3] = 0;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const idx = y * w + x;
+    if (bg[idx]) continue;
+    const nb = [x > 0 ? idx - 1 : -1, x < w - 1 ? idx + 1 : -1, y > 0 ? idx - w : -1, y < h - 1 ? idx + w : -1];
+    let near = 0;
+    for (const j of nb) if (j >= 0 && bg[j]) near++;
+    if (near >= 2) d[idx * 4 + 3] = 110;
+    else if (near) d[idx * 4 + 3] = 190;
+  }
+  ctx.putImageData(imgData, 0, 0);
+  return c;
+}
+
+/* ================= 批量衣橱 ================= */
+let myItems = [];   // {id,name,key,url}
+let itemSeq = 0;
+const myItemsEl = document.getElementById('myItems');
+
+function renderMyItems() {
+  myItemsEl.innerHTML = myItems.map(it => `
+    <div class="mi">
+      <button class="del" data-del="${it.id}">×</button>
+      <img src="${it.url}" alt="${it.name}">
+      <div class="t">${it.name}</div>
+    </div>`).join('');
+}
+myItemsEl.addEventListener('click', e => {
+  const b = e.target.closest('[data-del]');
+  if (!b) return;
+  const it = myItems.find(x => x.id === +b.dataset.del);
+  if (it) URL.revokeObjectURL(it.url);
+  myItems = myItems.filter(x => x.id !== +b.dataset.del);
+  renderMyItems();
+});
+
+document.getElementById('batchInput').addEventListener('change', async e => {
+  const files = [...e.target.files];
+  const key = document.getElementById('batchCat').value;
+  const label = document.getElementById('batchCat').selectedOptions[0].textContent;
+  e.target.value = '';
+  if (!files.length) return;
+  const cuts = [];
+  for (const f of files.slice(0, 12)) {
+    const img = await loadImg(URL.createObjectURL(f));
+    const cut = cutout(img);
+    cuts.push(cut);
+    const url = await new Promise(res => cut.toBlob(res, 'image/png'));
+    myItems.push({ id: ++itemSeq, name: label + itemSeq, key, url: URL.createObjectURL(url) });
+    renderMyItems();
+  }
+  // 上传记录：前 3 件拼一张缩略图
+  const mc = document.createElement('canvas');
+  mc.width = 210; mc.height = 70;
+  const mctx = mc.getContext('2d');
+  cuts.slice(0, 3).forEach((cv, i) => mctx.drawImage(cv, i * 70, 0, 70, 70));
+  addRecord('upload', `批量上传 ${files.length > 12 ? 12 : files.length} 件单品（${label}）`, mc.toDataURL('image/jpeg', .8));
+});
+
+/* ================= 智能搭配组合 ================= */
+const MATCH_SLOTS = { // x,y,w,h,rot
+  outer:  [.15, .03, .70, .40, -2],
+  dress:  [.25, .04, .50, .66, 1],
+  top:    [.27, .10, .46, .30, 2],
+  bottom: [.26, .36, .48, .42, -1.5],
+  scarf:  [.30, .07, .40, .13, 2],
+  socks:  [.22, .72, .17, .09, 0],
+  shoes:  [.29, .78, .42, .17, 2],
+  bag:    [.03, .50, .25, .24, -6],
+  hat:    [.72, .05, .25, .20, -3],
+  jewel:  [.71, .42, .24, .13, 4],
+};
+const MATCH_ORDER = ['outer', 'dress', 'bottom', 'top', 'scarf', 'socks', 'shoes', 'bag', 'hat', 'jewel'];
+const imgCache = new Map();
+async function cachedImg(url) {
+  if (!imgCache.has(url)) imgCache.set(url, await loadImg(url));
+  return imgCache.get(url);
+}
+
+function buildCombos(g) {
+  const pick1 = k => g[k][Math.floor(Math.random() * g[k].length)];
+  let core = null;
+  if (g.dress && g.shoes) core = ['dress', 'shoes'];
+  else if (g.top && g.bottom && g.shoes) core = ['top', 'bottom', 'shoes'];
+  else if (g.top && g.bottom) core = ['top', 'bottom'];
+  else if (g.dress) core = ['dress'];
+  if (!core) return [];
+  const extras = ['outer', 'bag', 'hat', 'scarf', 'jewel', 'socks'].filter(k => g[k]);
+  const plans = extras.length ? [[extras[0]], extras.slice(0, 2), extras.slice(0, 3)] : [[]];
+  const combos = [], usedSig = new Set();
+  plans.forEach(extraKeys => {
+    for (let a = 0; a < 8; a++) {
+      const sel = {};
+      core.forEach(k => sel[k] = pick1(k));
+      extraKeys.forEach(k => sel[k] = pick1(k));
+      const sig = Object.values(sel).map(x => x.id).join(',');
+      if (usedSig.has(sig)) continue;
+      usedSig.add(sig);
+      const tags = [];
+      if (sel.outer) tags.push('层次感丰富');
+      if (sel.jewel || sel.scarf) tags.push('配饰点睛');
+      if (sel.hat) tags.push('休闲减龄');
+      const pool = ['色彩和谐，整体协调', '通勤风格，利落大方', '适合周末出行', '简约不费力', '日常上课首选'];
+      tags.push(pool[Math.floor(Math.random() * pool.length)]);
+      combos.push({ sel, reason: [...new Set(tags)].slice(0, 2).join(' · ') });
+      break;
+    }
+  });
+  return combos.slice(0, 3);
+}
+
+async function renderCombo(combo) {
+  const W = 750, H = 980;
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#efe9df'; ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = 'rgba(0,0,0,.03)';
+  for (let i = 0; i < H; i += 3) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(W, i); ctx.stroke(); }
+
+  for (const key of MATCH_ORDER) {
+    const it = combo.sel[key];
+    if (!it) continue;
+    const img = await cachedImg(it.url);
+    let [x, y, w, h, rot] = MATCH_SLOTS[key];
+    rot += (Math.random() - .5) * 3;
+    const dx = x * W, dy = y * H, dw = w * W, dh = h * H;
+    ctx.save();
+    ctx.translate(dx + dw / 2, dy + dh / 2);
+    ctx.rotate(rot * Math.PI / 180);
+    ctx.shadowColor = 'rgba(0,0,0,.25)'; ctx.shadowBlur = 20; ctx.shadowOffsetY = 8;
+    const s = Math.min(dw / img.width, dh / img.height);
+    const iw = img.width * s, ih = img.height * s;
+    ctx.drawImage(img, -iw / 2, -ih / 2, iw, ih);
+    ctx.restore();
+  }
+  return c;
+}
+
+document.getElementById('btnMatch').addEventListener('click', async () => {
+  if (myItems.length < 2) { alert('请先批量上传至少 2 件单品'); return; }
+  const loading = document.getElementById('matchLoading');
+  const grid = document.getElementById('matchGrid');
+  loading.classList.remove('hidden');
+  grid.innerHTML = '';
+  await new Promise(r => setTimeout(r, 60));
+  const groups = {};
+  myItems.forEach(it => (groups[it.key] = groups[it.key] || []).push(it));
+  const combos = buildCombos(groups);
+  const cards = [];
+  for (const combo of combos) {
+    const canvas = await renderCombo(combo);
+    const url = canvas.toDataURL('image/png');
+    const tc = document.createElement('canvas');
+    tc.width = 300; tc.height = 392;
+    tc.getContext('2d').drawImage(canvas, 0, 0, 300, 392);
+    addRecord('outfit', combo.reason, tc.toDataURL('image/jpeg', .8));
+    cards.push({ url, combo });
+  }
+  grid.innerHTML = cards.map(({ url, combo }) => `
+    <div class="match-card">
+      <img src="${url}" alt="智能搭配效果图">
+      <div class="b">
+        <div class="reason">${combo.reason}</div>
+        <div class="mini-tags">${Object.values(combo.sel).map(x => `<span>${x.name}</span>`).join('')}</div>
+      </div>
+    </div>`).join('');
+  loading.classList.add('hidden');
+});
+
+/* ================= 使用记录（localStorage） ================= */
+const REC_KEY = 'ypjh_records_v1';
+function getRecords() { try { return JSON.parse(localStorage.getItem(REC_KEY)) || []; } catch (e) { return []; } }
+function saveRecords(r) {
+  try { localStorage.setItem(REC_KEY, JSON.stringify(r.slice(0, 60))); }
+  catch (e) { alert('本地存储空间不足，旧记录将被清理'); localStorage.setItem(REC_KEY, JSON.stringify(r.slice(0, 20))); }
+}
+function addRecord(kind, text, img, remoteUrl) {
+  const r = getRecords();
+  if (kind === 'browse' && r[0] && r[0].kind === 'browse' && r[0].text === text) return;
+  r.unshift({ id: Date.now() + '' + Math.random().toString(36).slice(2, 6), t: Date.now(), kind, text, img: img || '', remoteUrl: remoteUrl || '' });
+  saveRecords(r);
+}
+const REC_KIND_LABEL = { upload: '衣橱上传', outfit: 'AI 搭配', browse: '浏览单品' };
+function renderRecords() {
+  const r = getRecords();
+  const el = document.getElementById('recordList');
+  if (!r.length) { el.innerHTML = '<div class="empty-tip">还没有使用记录，去上传衣物或逛逛服装库吧</div>'; return; }
+  el.innerHTML = r.map(x => {
+    const thumb = x.img || x.remoteUrl || '';
+    const text = x.kind === 'outfit' ? `生成搭配方案：${x.text}` : x.kind === 'upload' ? x.text : `浏览服装库单品：${x.text}`;
+    return `
+      <div class="record-card">
+        ${thumb ? `<img src="${thumb}" alt="">` : ''}
+        <div class="info">
+          <div class="line"><span class="kind">${REC_KIND_LABEL[x.kind]}</span>${text}</div>
+          <div class="time">${new Date(x.t).toLocaleString('zh-CN', { hour12: false })}</div>
+        </div>
+        <button class="del" data-rec-del="${x.id}">删除</button>
+      </div>`;
+  }).join('');
+}
+document.getElementById('recordList').addEventListener('click', e => {
+  const b = e.target.closest('[data-rec-del]');
+  if (!b) return;
+  saveRecords(getRecords().filter(x => x.id !== b.dataset.rec_del));
+  renderRecords();
+});
+document.getElementById('clearRecords').addEventListener('click', () => {
+  if (confirm('确定清空全部使用记录吗？此操作不可恢复')) {
+    localStorage.removeItem(REC_KEY);
+    renderRecords();
+  }
+});
+document.querySelector('[data-go="records"]').addEventListener('click', renderRecords);
+renderRecords();
