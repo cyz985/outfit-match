@@ -1,6 +1,14 @@
 /* 衣拍即合 - 纯前端，图片本地处理 */
 const IMG = (p, s) => `https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=${encodeURIComponent(p)}&image_size=${s || 'square'}`;
 
+/* 本地静态图片路径（全部预生成，秒开） */
+const pad3 = n => String(n).padStart(3, '0');
+const libIndex = name => LIB_ITEMS.findIndex(x => x[0] === name);
+const LIB_P = i => 'assets/lib/' + pad3(i + 1) + '.jpg';
+const lpByName = n => LIB_P(libIndex(n));
+const INSPO_P = (tab, opt) => `assets/inspo/${tab}-${INSPO[tab].opts.indexOf(opt) + 1}.jpg`;
+window.__fb = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect width='400' height='400' fill='%23eef2f0'/%3E%3Ctext x='200' y='206' fill='%239ca3af' font-size='18' text-anchor='middle' font-family='sans-serif'%3E图片暂无%3C/text%3E%3C/svg%3E";
+
 /* ---------- 页面切换 ---------- */
 const pages = document.querySelectorAll('.page');
 const navLinks = document.querySelectorAll('.nav-link');
@@ -28,8 +36,8 @@ const MATERIALS = [
   ['棒球帽', '米色棒球帽产品摄影，浅灰背景，高清'],
   ['卫衣', '浅灰色连帽卫衣平铺产品摄影，浅灰背景，高清'],
 ];
-document.getElementById('homeStrip').innerHTML = MATERIALS.map(([name, p]) =>
-  `<div class="thumb"><img loading="lazy" src="${IMG(p)}" alt="${name}"><div class="cap">${name}</div></div>`).join('');
+// 首页素材复用服装库本地图，仅条纹T恤为独立素材（渲染在 LIB_ITEMS 之后）
+const HOME_REF = ['衬衫','直筒牛仔裤','风衣','针织衫','小白鞋','西装裤',null,'牛仔外套','百褶裙','帆布包','棒球帽','卫衣'];
 
 /* ---------- 衣橱上传（本地预览，不上传） ---------- */
 const CATS = [
@@ -210,13 +218,15 @@ document.getElementById('btnEffect').addEventListener('click', async () => {
 });
 
 /* ---------- 穿搭灵感 ---------- */
+// [名称, 图片标识(库内名称或 home:007), 说明]，渲染时才解析为本地路径
 const SHOP = {
-  '上装': [['白色棉质衬衫', MATERIALS[0][1], '百搭基础款，通勤休闲两相宜'], ['条纹T恤', MATERIALS[6][1], '法式复古，单穿内搭都好看'], ['针织开衫', MATERIALS[3][1], '温柔层次感必备']],
-  '下装': [['直筒牛仔裤', MATERIALS[1][1], '修饰腿型，高腰显腿长'], ['黑色西装裤', MATERIALS[5][1], '垂坠显瘦，通勤首选'], ['百褶裙', MATERIALS[8][1], '学院风，灵动百搭']],
-  '外套': [['卡其色风衣', MATERIALS[2][1], '春秋季气场单品'], ['牛仔外套', MATERIALS[7][1], '复古街头感，永不过时']],
-  '鞋履': [['小白鞋', MATERIALS[4][1], '鞋柜必备，搭一切']],
-  '配饰': [['帆布托特包', MATERIALS[9][1], '大容量日常通勤'], ['棒球帽', MATERIALS[10][1], '遮阳又增加造型感']],
+  '上装': [['白色棉质衬衫', '衬衫', '百搭基础款，通勤休闲两相宜'], ['条纹T恤', 'home:007', '法式复古，单穿内搭都好看'], ['针织开衫', '针织衫', '温柔层次感必备']],
+  '下装': [['直筒牛仔裤', '直筒牛仔裤', '修饰腿型，高腰显腿长'], ['黑色西装裤', '西装裤', '垂坠显瘦，通勤首选'], ['百褶裙', '百褶裙', '学院风，灵动百搭']],
+  '外套': [['卡其色风衣', '风衣', '春秋季气场单品'], ['牛仔外套', '牛仔外套', '复古街头感，永不过时']],
+  '鞋履': [['小白鞋', '小白鞋', '鞋柜必备，搭一切']],
+  '配饰': [['帆布托特包', '帆布包', '大容量日常通勤'], ['棒球帽', '棒球帽', '遮阳又增加造型感']],
 };
+const shopPath = v => v.startsWith('home:') ? 'assets/home/' + v.slice(5) + '.jpg' : lpByName(v);
 const CASES = [
   ['简约日常', '白衬衫 + 直筒牛仔裤 + 小白鞋，清爽不费力', '年轻女性穿白色衬衫和蓝色直筒牛仔裤小白鞋的全身街拍，自然光，真实摄影'],
   ['优雅通勤', '卡其风衣 + 西装裤，利落有气场', '职场女性穿卡其色风衣和黑色西装裤的全身街拍，城市街道，真实摄影'],
@@ -225,8 +235,8 @@ const CASES = [
   ['甜酷约会', '短上衣 + 高腰裙，甜而不腻', '年轻女性穿短款上衣和高腰半身裙的全身照，咖啡馆街道，真实摄影'],
   ['复古牛仔', '牛仔外套叠穿，美式复古', '年轻人穿浅蓝牛仔外套和白T恤牛仔裤的全身街拍，真实摄影'],
 ];
-document.getElementById('caseGrid').innerHTML = CASES.map(([t, d, p]) =>
-  `<div class="case-card"><img loading="lazy" src="${IMG(p, 'portrait_4_3')}" alt="${t}"><div class="body"><b>${t}</b><p>${d}</p></div></div>`).join('');
+document.getElementById('caseGrid').innerHTML = CASES.map(([t, d], i) =>
+  `<div class="case-card"><img loading="lazy" src="assets/case/${i + 1}.jpg" onerror="this.onerror=null;this.src=__fb" alt="${t}"><div class="body"><b>${t}</b><p>${d}</p></div></div>`).join('');
 
 const INSPO = {
   color: {
@@ -273,16 +283,16 @@ function renderInspo() {
   if (inspoTab === 'shop') {
     res.innerHTML = `<h3>推荐购买单品 · ${inspoOpt}</h3><div class="shop-grid">` +
       SHOP[inspoOpt].map(([n, p, d]) =>
-        `<div class="item"><img loading="lazy" src="${IMG(p)}" alt="${n}"><div class="txt"><b>${n}</b><br>${d}</div></div>`).join('') + '</div>';
+        `<div class="item"><img loading="lazy" src="${shopPath(p)}" onerror="this.onerror=null;this.src=__fb" alt="${n}"><div class="txt"><b>${n}</b><br>${d}</div></div>`).join('') + '</div>';
     return;
   }
   const [advice, prompt] = INSPO[inspoTab].gen(inspoOpt);
   res.innerHTML = `
-    <div class="card"><img loading="lazy" src="${IMG(prompt, 'portrait_4_3')}" alt="${inspoOpt}穿搭效果图">
+    <div class="card"><img loading="lazy" src="${INSPO_P(inspoTab, inspoOpt)}" onerror="this.onerror=null;this.src=__fb" alt="${inspoOpt}穿搭效果图">
       <div class="meta"><b>${inspoOpt}</b><p>${advice}</p></div></div>
     <h3>搭配推荐单品</h3>
     <div class="shop-grid">${SHOP['上装'].slice(0, 2).concat(SHOP['鞋履']).map(([n, p, d]) =>
-      `<div class="item"><img loading="lazy" src="${IMG(p)}" alt="${n}"><div class="txt"><b>${n}</b><br>${d}</div></div>`).join('')}</div>`;
+      `<div class="item"><img loading="lazy" src="${shopPath(p)}" onerror="this.onerror=null;this.src=__fb" alt="${n}"><div class="txt"><b>${n}</b><br>${d}</div></div>`).join('')}</div>`;
 }
 document.getElementById('inspoTabs').addEventListener('click', e => {
   const t = e.target.closest('.tab');
@@ -298,7 +308,7 @@ document.getElementById('inspoPills').addEventListener('click', e => {
   inspoOpt = p.textContent;
   renderInspo();
 });
-renderInspo();
+// 初次 renderInspo 移至 LIB_ITEMS 定义之后
 
 /* ================= 服装库（54 款真实单品） ================= */
 // [名称, 品类, 面料材质, 搭配建议]
@@ -476,6 +486,12 @@ const LIB_ITEMS = [
   ['埃及长袍','异域服饰','棉麻宽松长袍，透气遮阳','配头巾凉鞋，沙漠朴素','埃及Galabeya长袍适应炎热干燥气候','外国 传统 埃及 长袍 中东'],
   ['夏威夷草裙','异域服饰','植物纤维草裙+花环，热带热情','配比基尼，海岛度假','夏威夷草裙(Hula)是波利尼西亚传统舞服','外国 传统 夏威夷 草裙 度假'],
 ];
+/* LIB_ITEMS 就绪后：渲染首页素材条与穿搭灵感初态 */
+document.getElementById('homeStrip').innerHTML = MATERIALS.map(([name], i) => {
+  const src = HOME_REF[i] ? lpByName(HOME_REF[i]) : 'assets/home/007.jpg';
+  return `<div class="thumb"><img loading="lazy" src="${src}" onerror="this.onerror=null;this.src=__fb" alt="${name}"><div class="cap">${name}</div></div>`;
+}).join('');
+renderInspo();
 /* 数组结构：[名称, 品类, 面料, 搭配/风格, 文化背景?, 关键词?] */
 const LIB_DETAIL = {
   care: {
@@ -541,7 +557,6 @@ const LIB_VIS = {
   '异域服饰':'外国传统服饰平铺产品摄影，浅灰纯色背景，真实面料纹理，高清，无人物',
   '其他配饰':'配饰产品摄影，浅灰纯色背景，真实材质光泽，高清，无人物',
 };
-const libImg = it => IMG(it[0] + '，' + (LIB_VIS[it[1]] || '服装平铺产品摄影，浅灰纯色背景，真实面料褶皱质感，高清，无人物'));
 let libFilter = '全部';
 const libFiltersEl = document.getElementById('libFilters');
 libFiltersEl.innerHTML = ['全部', ...new Set(LIB_ITEMS.map(i => i[1]))]
@@ -553,13 +568,14 @@ const searchInput = document.getElementById('libSearchInput');
 
 function cardHTML(it, detailed) {
   const [name, cat, fabric, , culture] = it;
+  const idx = LIB_ITEMS.indexOf(it);
   const detailLines = detailed ? `
     <div class="d"><b>面料：</b>${fabric}</div>
     <div class="d"><b>风格：</b>${cat}</div>
     <div class="d"><b>适用场景：</b>${LIB_DETAIL.scene[cat]}</div>
     ${culture ? `<div class="d"><b>文化背景：</b>${culture}</div>` : ''}` : '';
-  return `<div class="lib-card" data-idx="${LIB_ITEMS.indexOf(it)}">
-    <img loading="lazy" src="${libImg(it)}" alt="${name}">
+  return `<div class="lib-card" data-idx="${idx}">
+    <img loading="lazy" src="${LIB_P(idx)}" onerror="this.onerror=null;this.src=__fb" alt="${name}">
     <div class="t"><b>${name}</b><span>${cat}</span>${detailLines}</div>
   </div>`;
 }
@@ -614,7 +630,7 @@ document.getElementById('libGrid').addEventListener('click', e => {
   const it = LIB_ITEMS[+card.dataset.idx];
   const [name, cat, fabric, pair, culture] = it;
   document.getElementById('modalBody').innerHTML = `
-    <img src="${libImg(it)}" alt="${name}">
+    <img src="${LIB_P(+card.dataset.idx)}" onerror="this.onerror=null;this.src=__fb" alt="${name}">
     <h3>${name}</h3><div class="cat-tag">${cat}</div>
     <dl>
       <dt>面料材质</dt><dd>${fabric}</dd>
@@ -625,7 +641,7 @@ document.getElementById('libGrid').addEventListener('click', e => {
       ${culture ? `<dt>文化背景</dt><dd>${culture}</dd>` : ''}
     </dl>`;
   modal.classList.remove('hidden');
-  addRecord('browse', name, null, libImg(it));
+  addRecord('browse', name, null, LIB_P(+card.dataset.idx));
 });
 const closeModal = () => modal.classList.add('hidden');
 document.getElementById('modalClose').addEventListener('click', closeModal);
