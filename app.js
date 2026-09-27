@@ -8,6 +8,26 @@ const LIB_P = i => 'assets/lib/' + pad3(i + 1) + '.jpg';
 const lpByName = n => LIB_P(libIndex(n));
 const INSPO_P = (tab, opt) => `assets/inspo/${tab}-${INSPO[tab].opts.indexOf(opt) + 1}.jpg`;
 window.__fb = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect width='400' height='400' fill='%23eef2f0'/%3E%3Ctext x='200' y='206' fill='%239ca3af' font-size='18' text-anchor='middle' font-family='sans-serif'%3E图片暂无%3C/text%3E%3C/svg%3E";
+/* 图片兜底链：本地失败→jsDelivr→重试本地→占位图；18秒未加载完成自动切换，保证卡片不留空白 */
+const CDN_FB = 'https://cdn.jsdelivr.net/gh/cyz985/outfit-match@main/';
+const fbSvg = name => 'data:image/svg+xml,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400"><rect width="400" height="400" fill="#eef2f0"/><text x="200" y="190" fill="#6b7280" font-size="20" text-anchor="middle" font-family="sans-serif">${name || '单品'}</text><text x="200" y="222" fill="#9ca3af" font-size="14" text-anchor="middle" font-family="sans-serif">网络较慢，请稍后刷新</text></svg>`);
+window.__imgFb = img => {
+  const step = (+(img.dataset.fb || 0)) + 1;
+  img.dataset.fb = step;
+  if (step <= 2 && img.dataset.local) {
+    img.onerror = () => __imgFb(img);
+    img.src = step === 1 ? CDN_FB + img.dataset.local : img.dataset.local + (img.dataset.local.includes('?') ? '&' : '?') + 'r=' + Date.now();
+  } else {
+    img.onerror = null;
+    img.src = fbSvg(img.alt);
+  }
+};
+window.__armWatch = scope => {
+  (scope || document).querySelectorAll('img[data-local]:not([data-armed])').forEach(img => {
+    img.dataset.armed = '1';
+    setTimeout(() => { if (!img.dataset.ok) __imgFb(img); }, 18000);
+  });
+};
 
 /* ---------- 页面切换 ---------- */
 const pages = document.querySelectorAll('.page');
@@ -236,7 +256,8 @@ const CASES = [
   ['复古牛仔', '牛仔外套叠穿，美式复古', '年轻人穿浅蓝牛仔外套和白T恤牛仔裤的全身街拍，真实摄影'],
 ];
 document.getElementById('caseGrid').innerHTML = CASES.map(([t, d], i) =>
-  `<div class="case-card"><img loading="lazy" src="assets/case/${i + 1}.jpg" onerror="this.onerror=null;this.src=__fb" alt="${t}"><div class="body"><b>${t}</b><p>${d}</p></div></div>`).join('');
+  `<div class="case-card"><img loading="lazy" data-local="assets/case/${i + 1}.jpg" src="assets/case/${i + 1}.jpg" onerror="__imgFb(this)" onload="this.dataset.ok=1" alt="${t}"><div class="body"><b>${t}</b><p>${d}</p></div></div>`).join('');
+__armWatch(document.getElementById('caseGrid'));
 
 const INSPO = {
   color: {
@@ -283,16 +304,18 @@ function renderInspo() {
   if (inspoTab === 'shop') {
     res.innerHTML = `<h3>推荐购买单品 · ${inspoOpt}</h3><div class="shop-grid">` +
       SHOP[inspoOpt].map(([n, p, d]) =>
-        `<div class="item"><img loading="lazy" src="${shopPath(p)}" onerror="this.onerror=null;this.src=__fb" alt="${n}"><div class="txt"><b>${n}</b><br>${d}</div></div>`).join('') + '</div>';
+        `<div class="item"><img loading="lazy" src="${shopPath(p)}" data-local="${shopPath(p)}" onerror="__imgFb(this)" onload="this.dataset.ok=1" alt="${n}"><div class="txt"><b>${n}</b><br>${d}</div></div>`).join('') + '</div>';
+    __armWatch(res);
     return;
   }
   const [advice, prompt] = INSPO[inspoTab].gen(inspoOpt);
   res.innerHTML = `
-    <div class="card"><img loading="lazy" src="${INSPO_P(inspoTab, inspoOpt)}" onerror="this.onerror=null;this.src=__fb" alt="${inspoOpt}穿搭效果图">
+    <div class="card"><img loading="lazy" src="${INSPO_P(inspoTab, inspoOpt)}" data-local="${INSPO_P(inspoTab, inspoOpt)}" onerror="__imgFb(this)" onload="this.dataset.ok=1" alt="${inspoOpt}穿搭效果图">
       <div class="meta"><b>${inspoOpt}</b><p>${advice}</p></div></div>
     <h3>搭配推荐单品</h3>
     <div class="shop-grid">${SHOP['上装'].slice(0, 2).concat(SHOP['鞋履']).map(([n, p, d]) =>
-      `<div class="item"><img loading="lazy" src="${shopPath(p)}" onerror="this.onerror=null;this.src=__fb" alt="${n}"><div class="txt"><b>${n}</b><br>${d}</div></div>`).join('')}</div>`;
+      `<div class="item"><img loading="lazy" src="${shopPath(p)}" data-local="${shopPath(p)}" onerror="__imgFb(this)" onload="this.dataset.ok=1" alt="${n}"><div class="txt"><b>${n}</b><br>${d}</div></div>`).join('')}</div>`;
+  __armWatch(res);
 }
 document.getElementById('inspoTabs').addEventListener('click', e => {
   const t = e.target.closest('.tab');
@@ -489,8 +512,9 @@ const LIB_ITEMS = [
 /* LIB_ITEMS 就绪后：渲染首页素材条与穿搭灵感初态 */
 document.getElementById('homeStrip').innerHTML = MATERIALS.map(([name], i) => {
   const src = HOME_REF[i] ? lpByName(HOME_REF[i]) : 'assets/home/007.jpg';
-  return `<div class="thumb"><img loading="lazy" src="${src}" onerror="this.onerror=null;this.src=__fb" alt="${name}"><div class="cap">${name}</div></div>`;
+  return `<div class="thumb"><img loading="lazy" src="${src}" data-local="${src}" onerror="__imgFb(this)" onload="this.dataset.ok=1" alt="${name}"><div class="cap">${name}</div></div>`;
 }).join('');
+__armWatch(document.getElementById('homeStrip'));
 renderInspo();
 /* 数组结构：[名称, 品类, 面料, 搭配/风格, 文化背景?, 关键词?] */
 const LIB_DETAIL = {
@@ -575,7 +599,7 @@ function cardHTML(it, detailed) {
     <div class="d"><b>适用场景：</b>${LIB_DETAIL.scene[cat]}</div>
     ${culture ? `<div class="d"><b>文化背景：</b>${culture}</div>` : ''}` : '';
   return `<div class="lib-card" data-idx="${idx}">
-    <img loading="lazy" src="${LIB_P(idx)}" onerror="this.onerror=null;this.src=__fb" alt="${name}">
+    <img loading="lazy" src="${LIB_P(idx)}" data-local="${LIB_P(idx)}" onerror="__imgFb(this)" onload="this.dataset.ok=1" alt="${name}">
     <div class="t"><b>${name}</b><span>${cat}</span>${detailLines}</div>
   </div>`;
 }
@@ -595,11 +619,13 @@ function renderLib() {
     document.getElementById('libGrid').innerHTML = hits.length
       ? hits.map(it => cardHTML(it, true)).join('')
       : `<div class="empty" style="grid-column:1/-1">没有找到相关衣物，试试「汉服」「水手服」「民族」「和服」等关键词</div>`;
+    __armWatch(document.getElementById('libGrid'));
     return;
   }
   searchMetaEl.classList.add('hidden');
   const list = libFilter === '全部' ? LIB_ITEMS : LIB_ITEMS.filter(i => i[1] === libFilter);
   document.getElementById('libGrid').innerHTML = list.map(it => cardHTML(it, false)).join('');
+  __armWatch(document.getElementById('libGrid'));
 }
 
 function runSearch() {
@@ -630,7 +656,7 @@ document.getElementById('libGrid').addEventListener('click', e => {
   const it = LIB_ITEMS[+card.dataset.idx];
   const [name, cat, fabric, pair, culture] = it;
   document.getElementById('modalBody').innerHTML = `
-    <img src="${LIB_P(+card.dataset.idx)}" onerror="this.onerror=null;this.src=__fb" alt="${name}">
+    <img src="${LIB_P(+card.dataset.idx)}" data-local="${LIB_P(+card.dataset.idx)}" onerror="__imgFb(this)" onload="this.dataset.ok=1" alt="${name}">
     <h3>${name}</h3><div class="cat-tag">${cat}</div>
     <dl>
       <dt>面料材质</dt><dd>${fabric}</dd>
@@ -641,6 +667,7 @@ document.getElementById('libGrid').addEventListener('click', e => {
       ${culture ? `<dt>文化背景</dt><dd>${culture}</dd>` : ''}
     </dl>`;
   modal.classList.remove('hidden');
+  __armWatch(document.getElementById('modalBody'));
   addRecord('browse', name, null, LIB_P(+card.dataset.idx));
 });
 const closeModal = () => modal.classList.add('hidden');
@@ -875,7 +902,7 @@ function renderRecords() {
     const text = x.kind === 'outfit' ? `生成搭配方案：${x.text}` : x.kind === 'upload' ? x.text : `浏览服装库单品：${x.text}`;
     return `
       <div class="record-card">
-        ${thumb ? `<img src="${thumb}" alt="">` : ''}
+        ${x.img ? `<img src="${x.img}" alt="">` : x.remoteUrl ? `<img src="${x.remoteUrl}" data-local="${x.remoteUrl}" onerror="__imgFb(this)" onload="this.dataset.ok=1" alt="单品图">` : ''}
         <div class="info">
           <div class="line"><span class="kind">${REC_KIND_LABEL[x.kind]}</span>${text}</div>
           <div class="time">${new Date(x.t).toLocaleString('zh-CN', { hour12: false })}</div>
@@ -883,6 +910,7 @@ function renderRecords() {
         <button class="del" data-rec-del="${x.id}">删除</button>
       </div>`;
   }).join('');
+  __armWatch(el);
 }
 document.getElementById('recordList').addEventListener('click', e => {
   const b = e.target.closest('[data-rec-del]');
