@@ -65,6 +65,25 @@
       <div class="step">
         <div class="step-head"><span class="step-no">1</span><h2>我的衣橱</h2><small>上传已有的衣服即可，配饰与发型为非必填</small></div>
         <div class="wardrobe" id="wardrobe"></div>
+
+        <!-- 保存到云端衣柜：写入 Supabase 的 clothes 表 -->
+        <form class="form" id="wardrobeForm" onsubmit="return false" style="margin-top:16px">
+          <div class="field half">
+            <label for="clothName">衣服名称</label>
+            <input type="text" id="clothName" placeholder="例如：米白针织开衫" required>
+          </div>
+          <div class="field half">
+            <label for="clothImageUrl">衣服图片链接</label>
+            <input type="url" id="clothImageUrl" placeholder="https://example.com/coat.jpg" required>
+          </div>
+          <div class="field">
+            <label for="clothDesc">描述</label>
+            <input type="text" id="clothDesc" placeholder="例如：柔软亲肤的细针织，适合春秋通勤叠穿">
+          </div>
+          <div class="gen-btns" style="margin:0">
+            <button class="btn btn-primary btn-lg" id="btnSaveWardrobe" type="submit">保存到衣柜</button>
+          </div>
+        </form>
       </div>
 
       <div class="step">

@@ -933,3 +933,56 @@ async function loadClothesData() {
 // 绑定两个测试按钮
 document.getElementById('btnSaveClothes').addEventListener('click', saveClothesData);
 document.getElementById('btnLoadClothes').addEventListener('click', loadClothesData);
+
+/* ---------- 保存到衣柜：把表单内容插入 clothes 表 ---------- */
+document.getElementById('wardrobeForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  if (!supabaseClient) {
+    alert('保存失败：Supabase 客户端未初始化');
+    return;
+  }
+  if (!requireLogin()) return;
+
+  const nameEl = document.getElementById('clothName');
+  const urlEl = document.getElementById('clothImageUrl');
+  const descEl = document.getElementById('clothDesc');
+  const name = nameEl.value.trim();
+  const imageUrl = urlEl.value.trim();
+  const description = descEl.value.trim();
+
+  if (!name || !imageUrl) {
+    alert('请先填写衣服名称和衣服图片链接');
+    return;
+  }
+
+  const btn = document.getElementById('btnSaveWardrobe');
+  btn.disabled = true;
+  btn.textContent = '保存中…';
+
+  // user_id 不传，交由数据库默认值自动填充
+  const { data, error } = await supabaseClient
+    .from('clothes')
+    .insert([{
+      cloth_name: name,
+      title: name,
+      description: description,
+      image_url: imageUrl
+    }])
+    .select();
+
+  btn.disabled = false;
+  btn.textContent = '保存到衣柜';
+
+  if (error) {
+    console.error('保存到衣柜失败：', error);
+    alert('保存失败：' + error.message);
+    return;
+  }
+
+  console.log('保存到衣柜成功：', data);
+  nameEl.value = '';
+  urlEl.value = '';
+  descEl.value = '';
+  alert('保存成功！');
+});
