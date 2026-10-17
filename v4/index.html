@@ -5,8 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>衣拍即合 · 第四版</title>
 <link rel="stylesheet" href="style.css">
-<!-- Supabase JS 客户端（CDN） -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- Supabase JS 客户端：国内镜像优先，主源不可用时逐级回退（脚本块按顺序执行，上一级成功则不再加载下一级） -->
+<script src="https://jsd.onmicrosoft.cn/npm/@supabase/supabase-js@2"></script>
+<script>if (typeof supabase === 'undefined' || !supabase.createClient) document.write('<script src="https://cdn.jsdmirror.com/npm/@supabase/supabase-js@2"><\/script>');</script>
+<script>if (typeof supabase === 'undefined' || !supabase.createClient) document.write('<script src="https://fastly.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>');</script>
 </head>
 <body>
 
