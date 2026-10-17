@@ -769,6 +769,100 @@ const supabaseClient = (typeof supabase !== 'undefined' && supabase.createClient
   ? supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
   : null;
 
+/* ================= 登录（Supabase Auth） ================= */
+/** 当前登录用户；未登录为 null */
+let currentUser = null;
+
+function setLoginTip(msg, ok) {
+  const el = document.getElementById('loginTip');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color = ok === false ? '#dc2626' : ok === true ? 'var(--g2)' : 'var(--muted)';
+}
+
+function showLoginModal() {
+  document.getElementById('loginModal').classList.remove('hidden');
+  document.body.classList.add('locked');
+}
+
+function hideLoginModal() {
+  document.getElementById('loginModal').classList.add('hidden');
+  document.body.classList.remove('locked');
+}
+
+/** 按登录状态切换界面：已登录则关闭登录框并展示主页面，未登录则遮挡页面 */
+function applyAuthState(session) {
+  currentUser = (session && session.user) ? session.user : null;
+  document.getElementById('navLogout').classList.toggle('hidden', !currentUser);
+  if (currentUser) {
+    hideLoginModal();
+  } else {
+    showLoginModal();
+    setLoginTip('请输入已在 Supabase Auth 注册的邮箱与密码');
+  }
+}
+
+/** 读写前的登录校验：未登录则阻止操作并弹出登录框 */
+function requireLogin() {
+  if (currentUser) return true;
+  console.warn('未登录，已阻止本次读写操作');
+  setSupabaseTip('未登录，无法读写数据', false);
+  showLoginModal();
+  return false;
+}
+
+// 登录表单提交：调用 supabase.auth.signInWithPassword 校验
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  if (!supabaseClient) {
+    setLoginTip('Supabase 客户端未初始化，无法登录', false);
+    return;
+  }
+  if (!email || !password) {
+    setLoginTip('请输入邮箱和密码', false);
+    return;
+  }
+  const btn = document.getElementById('btnLogin');
+  btn.disabled = true;
+  btn.textContent = '登录中…';
+
+  const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+  btn.disabled = false;
+  btn.textContent = '登录';
+  if (error) {
+    console.error('登录失败：', error);
+    setLoginTip('登录失败：' + error.message, false);
+    return;
+  }
+  console.log('登录成功：', data.user);
+  setLoginTip('登录成功', true);
+  applyAuthState(data.session);
+});
+
+// 退出登录，回到未登录状态
+document.getElementById('navLogout').addEventListener('click', async () => {
+  await supabaseClient.auth.signOut();
+  document.getElementById('loginPassword').value = '';
+  applyAuthState(null);
+});
+
+// 启动：读取已有会话，避免刷新后重复登录；CDN 未加载时放行浏览（读写仍被拦截）
+if (supabaseClient) {
+  supabaseClient.auth.getSession()
+    .then(({ data }) => applyAuthState(data.session))
+    .catch(err => {
+      console.error('读取登录状态失败：', err);
+      applyAuthState(null);
+    });
+} else {
+  hideLoginModal();
+  setLoginTip('Supabase 客户端未初始化，无法登录', false);
+  console.warn('Supabase CDN 未加载，跳过登录校验（读写功能仍不可用）');
+}
+
 /** 页面测试状态提示 */
 function setSupabaseTip(msg, ok) {
   const el = document.getElementById('supabaseTip');
@@ -784,6 +878,7 @@ async function saveClothesData() {
     setSupabaseTip('写入失败：Supabase CDN 未加载', false);
     return null;
   }
+  if (!requireLogin()) return null;
 
   // 使用表内已有字段；user_id 交由数据库默认值自动填充，前端不传
   const testRow = {
@@ -818,6 +913,7 @@ async function loadClothesData() {
     setSupabaseTip('读取失败：Supabase CDN 未加载', false);
     return null;
   }
+  if (!requireLogin()) return null;
 
   const { data, error } = await supabaseClient
     .from('clothes')

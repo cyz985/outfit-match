@@ -27,6 +27,7 @@
       <a class="nav-link" data-go="records">使用记录</a>
       <a class="nav-link" data-go="about">项目介绍</a>
       <button class="btn btn-primary nav-cta" data-go="room">开始搭配</button>
+      <a class="nav-link hidden" id="navLogout">退出登录</a>
     </div>
   </div>
 </nav>
@@ -222,7 +223,7 @@
       <div class="about-grid">
         <div class="about-card"><h3>隐私安全</h3><p>所有照片均在浏览器本地处理与预览，不上传服务器，刷新即清空，数据完全属于你。</p></div>
         <div class="about-card"><h3>六大人群 × 76 款素材</h3><p>按性别、年龄、肤色、脸型、身材、风格六大维度生成方案，内置 76 款真实质感服装素材。</p></div>
-        <div class="about-card"><h3>轻量流畅</h3><p>纯 HTML / CSS / JavaScript 实现，无框架、无后端，秒开秒用，老旧设备也能流畅运行。</p></div>
+        <div class="about-card"><h3>轻量流畅</h3><p>告别臃肿的框架依赖，坚持原生开发带来的极致响应。底层搭载 Supabase 提供强大的云端数据持久化能力，让轻量级的网页也能拥有现代应用的数据同步体验。</p></div>
         <div class="about-card"><h3>四大功能</h3><p>我的衣橱管理、智能穿搭方案、平铺效果图生成、穿搭灵感与单品购买参考。</p></div>
       </div>
 
@@ -243,6 +244,24 @@
 </main>
 
 <footer class="footer">衣拍即合 · 让每一件衣服都拍得其所</footer>
+
+<!-- 登录弹窗：未登录时遮挡页面，登录成功后才展示主页面 -->
+<div class="modal-mask" id="loginModal">
+  <div class="modal login-modal">
+    <div class="modal-body">
+      <h3 class="login-title">登录「衣拍即合」</h3>
+      <p class="login-sub">登录成功后即可读写 Supabase 云端数据</p>
+      <form id="loginForm">
+        <label class="login-label" for="loginEmail">邮箱</label>
+        <input class="login-input" id="loginEmail" type="email" placeholder="you@example.com" autocomplete="username" required>
+        <label class="login-label" for="loginPassword">密码</label>
+        <input class="login-input" id="loginPassword" type="password" placeholder="请输入密码" autocomplete="current-password" required>
+        <button class="btn btn-primary btn-lg login-btn" type="submit" id="btnLogin">登录</button>
+      </form>
+      <p class="tip" id="loginTip">请输入已在 Supabase Auth 注册的邮箱与密码</p>
+    </div>
+  </div>
+</div>
 
 <!-- 服装详情弹窗 -->
 <div class="modal-mask hidden" id="itemModal">

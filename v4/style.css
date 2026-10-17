@@ -229,3 +229,18 @@ img { max-width:100%; display:block; }
 .record-card .kind { display:inline-block; font-size:11px; padding:2px 8px; border-radius:999px; background:var(--g3); color:var(--g2); font-weight:600; margin-right:6px; }
 .record-card .del { border:none; background:none; color:#dc2626; cursor:pointer; font-size:13px; flex:none; }
 .empty-tip { color:var(--muted); text-align:center; padding:40px 0; }
+
+/* ===== 登录弹窗 ===== */
+.login-modal { max-width:420px; }
+.login-title { margin:4px 0 6px; font-size:20px; }
+.login-sub { margin:0 0 16px; color:var(--sub); font-size:13px; }
+.login-label { display:block; margin:12px 0 6px; font-size:13px; font-weight:600; }
+.login-input {
+  width:100%; padding:10px 14px; font-size:14px; font-family:inherit; color:var(--text);
+  border:1.5px solid var(--border); border-radius:12px; outline:none; transition:.15s ease;
+}
+.login-input:focus { border-color:var(--g); box-shadow:0 0 0 3px var(--g3); }
+.login-btn { width:100%; margin-top:18px; }
+.login-btn:disabled { opacity:.6; cursor:not-allowed; }
+#loginTip { margin:12px 0 0; font-size:13px; color:var(--muted); }
+body.locked { overflow:hidden; }
