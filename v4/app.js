@@ -142,16 +142,43 @@ document.getElementById('btnPlan').addEventListener('click', () => {
     '甜酷': '一件短款针织上衣或皮质半裙',
   }[style];
 
+  const body = pick('body');
+  const tags = [gender, age + '岁', skin, face, body, style + '风'].filter(Boolean);
+  const diagnosis = `${has.length ? `已上传 ${has.join('、')}，可以开始组合。` : '还没有上传衣物。'}${miss.length ? ` 建议补充${miss.join('、')}照片以获得更完整的方案。` : ''}`;
+
+  // 记录本次方案，供「保存到云端」写入 outfit_records
+  lastPlan = {
+    type: 'plan',
+    title: `穿搭方案 · ${style}风`,
+    created_at: new Date().toISOString(),
+    profile: { gender, age, height: h, weight: w, skin, face, body, style },
+    tags,
+    wardrobe: has,
+    missing: miss,
+    advice: {
+      color: SKIN[skin] || '',
+      style: STYLE_TIP[style] || '',
+      body: bodyTip(h, w),
+      accessory: FACE[face] || '',
+    },
+    shopping: shopRec || '',
+  };
+
   document.getElementById('planResult').className = 'plan-result';
   document.getElementById('planResult').innerHTML = `
     <h3>你的专属穿搭方案</h3>
-    <div>${[gender, age + '岁', skin, face, style + '风'].map(t => `<span class="tag">${t}</span>`).join('')}</div>
-    <p><b>衣橱诊断：</b>${has.length ? `已上传 ${has.join('、')}，可以开始组合。` : '还没有上传衣物。'}${miss.length ? ` 建议补充${miss.join('、')}照片以获得更完整的方案。` : ''}</p>
+    <div>${tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>
+    <p><b>衣橱诊断：</b>${diagnosis}</p>
     <p><b>配色方案：</b>${SKIN[skin]}</p>
     <p><b>穿搭思路：</b>${STYLE_TIP[style]}</p>
     <p><b>身材建议：</b>${bodyTip(h, w)}</p>
     <p><b>配饰与发型：</b>${FACE[face]}</p>
-    <div class="rec"><b>推荐购入单品（购物参考）</b>${shopRec}，可在下方「穿搭灵感 · 推荐单品」中查看对应实物图。</div>`;
+    <div class="rec"><b>推荐购入单品（购物参考）</b>${shopRec}，可在下方「穿搭灵感 · 推荐单品」中查看对应实物图。</div>
+    <div class="gen-btns" style="margin:16px 0 0; align-items:center">
+      <button class="btn btn-primary" id="btnSavePlan" type="button">保存方案到云端</button>
+      <span class="tip" id="planCloudTip">${currentUser ? '将写入 outfit_records' : '登录后可保存到云端'}</span>
+    </div>`;
+  document.getElementById('btnSavePlan').addEventListener('click', savePlanToCloud);
   document.getElementById('planResult').scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
@@ -586,13 +613,28 @@ document.getElementById('batchInput').addEventListener('change', async e => {
   e.target.value = '';
   if (!files.length) return;
   const cuts = [];
+  const cloudTasks = [];
   for (const f of files.slice(0, 12)) {
     const img = await loadImg(URL.createObjectURL(f));
     const cut = cutout(img);
     cuts.push(cut);
     const url = await new Promise(res => cut.toBlob(res, 'image/png'));
-    myItems.push({ id: ++itemSeq, name: label + itemSeq, key, url: URL.createObjectURL(url) });
+    const seq = ++itemSeq;
+    const name = label + seq;
+    const thumb = canvasThumb(cut, 360);
+    myItems.push({ id: seq, name, key, url: URL.createObjectURL(url), thumb });
     renderMyItems();
+    // 已登录：自动把衣物照片信息写入 wardrobe_items（带当前 user_id）
+    if (currentUser) {
+      cloudTasks.push(saveWardrobeItem({ name, category: key, description: '批量上传（本地抠图）', image_url: thumb }, true));
+    }
+  }
+  if (currentUser) {
+    await Promise.all(cloudTasks);
+    setWardrobeCloudTip(`已同步 ${cloudTasks.length} 件到云端衣橱`, true);
+    refreshCloudData();
+  } else {
+    setWardrobeCloudTip('未登录：上传仅保存在本地，登录后可自动同步到云端', false);
   }
   // 上传记录：前 3 件拼一张缩略图
   const mc = document.createElement('canvas');
@@ -699,9 +741,15 @@ document.getElementById('btnMatch').addEventListener('click', async () => {
     const tc = document.createElement('canvas');
     tc.width = 300; tc.height = 392;
     tc.getContext('2d').drawImage(canvas, 0, 0, 300, 392);
-    addRecord('outfit', combo.reason, tc.toDataURL('image/jpeg', .8));
-    cards.push({ url, combo });
+    const thumb = tc.toDataURL('image/jpeg', .8);
+    addRecord('outfit', combo.reason, thumb);
+    cards.push({ url, combo, thumb });
   }
+  lastCombos = cards.map(({ combo, thumb }) => ({
+    reason: combo.reason,
+    items: Object.values(combo.sel).map(x => ({ name: x.name, category: x.key })),
+    image: thumb,
+  }));
   grid.innerHTML = cards.map(({ url, combo }) => `
     <div class="match-card">
       <img src="${url}" alt="智能搭配效果图">
@@ -709,7 +757,12 @@ document.getElementById('btnMatch').addEventListener('click', async () => {
         <div class="reason">${combo.reason}</div>
         <div class="mini-tags">${Object.values(combo.sel).map(x => `<span>${x.name}</span>`).join('')}</div>
       </div>
-    </div>`).join('');
+    </div>`).join('') + `
+    <div class="match-save">
+      <button class="btn btn-primary" id="btnSaveCombos" type="button">保存搭配组合到云端</button>
+      <span class="tip">${currentUser ? '将写入 outfit_records' : '登录后可保存到云端'}</span>
+    </div>`;
+  document.getElementById('btnSaveCombos').addEventListener('click', saveCombosToCloud);
   loading.classList.add('hidden');
 });
 
@@ -757,21 +810,41 @@ document.getElementById('clearRecords').addEventListener('click', () => {
     renderRecords();
   }
 });
-document.querySelector('[data-go="records"]').addEventListener('click', renderRecords);
+document.querySelector('[data-go="records"]').addEventListener('click', () => {
+  renderRecords();
+  refreshCloudData();
+});
 renderRecords();
 
-/* ================= Supabase 数据库（clothes 表） ================= */
-const SUPABASE_URL = 'https://zpfiypggsofgnnazalrq.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_uxRTPI2M6Q-7KAxDMvnJZw_AbEwdvjK';
+/* ================= Supabase 云端：环境变量与客户端 ================= */
+const ENV = window.__ENV__ || {};
+const SUPABASE_URL = String(ENV.VITE_SUPABASE_URL || '').trim();
+const SUPABASE_ANON_KEY = String(ENV.VITE_SUPABASE_ANON_KEY || '').trim();
+const CONFIG_READY = /^https?:\/\//.test(SUPABASE_URL) && !!SUPABASE_ANON_KEY &&
+  !/YOUR_|your-|在此填写|请填写|替换/i.test(SUPABASE_URL + SUPABASE_ANON_KEY);
 
-// 初始化 Supabase 客户端（CDN 未加载成功时为 null，避免页面其他逻辑报错）
-const supabaseClient = (typeof supabase !== 'undefined' && supabase.createClient)
-  ? supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
-  : null;
+let supabaseClient = null;
+if (CONFIG_READY && typeof supabase !== 'undefined' && supabase.createClient) {
+  try { supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); }
+  catch (err) { console.error('Supabase 初始化失败：', err); }
+}
 
-/* ================= 登录（Supabase Auth） ================= */
+// 环境变量缺失时给出友好提示，页面其余本地功能不受影响
+if (!CONFIG_READY) {
+  const banner = document.getElementById('envBanner');
+  if (banner) {
+    banner.classList.remove('hidden');
+    banner.innerHTML = '未检测到云端配置：请在 <code>v4/.env</code> 中填写 <code>VITE_SUPABASE_URL</code> 与 <code>VITE_SUPABASE_ANON_KEY</code>，并同步到 <code>v4/env.js</code>。本地预览、抠图、搭配与效果图功能仍可正常使用。';
+  }
+}
+
+/* ================= 登录 / 注册（Supabase Auth） ================= */
 /** 当前登录用户；未登录为 null */
 let currentUser = null;
+let authMode = 'login';
+let pendingAction = null;
+let profileTimer = null;
+let lastProfileLoadedFor = null;
 
 function setLoginTip(msg, ok) {
   const el = document.getElementById('loginTip');
@@ -780,76 +853,264 @@ function setLoginTip(msg, ok) {
   el.style.color = ok === false ? '#dc2626' : ok === true ? 'var(--g2)' : 'var(--muted)';
 }
 
-function showLoginModal() {
-  document.getElementById('loginModal').classList.remove('hidden');
+function setWardrobeCloudTip(msg, ok) {
+  const el = document.getElementById('cloudWardrobeTip');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.color = ok === false ? '#b45309' : ok === true ? 'var(--g2)' : 'var(--muted)';
+}
+
+function openAuthModal(mode) {
+  setAuthMode(mode || 'login');
+  document.getElementById('loginModal')?.classList.remove('hidden');
   document.body.classList.add('locked');
 }
 
-function hideLoginModal() {
-  document.getElementById('loginModal').classList.add('hidden');
+function closeAuthModal() {
+  document.getElementById('loginModal')?.classList.add('hidden');
   document.body.classList.remove('locked');
 }
 
-/** 按登录状态切换界面：已登录则关闭登录框并展示主页面，未登录则遮挡页面 */
+function setAuthMode(mode) {
+  authMode = mode === 'signup' ? 'signup' : 'login';
+  document.querySelectorAll('.auth-tab').forEach(t =>
+    t.classList.toggle('active', t.dataset.authTab === authMode));
+  const title = document.getElementById('authTitle');
+  const sub = document.getElementById('authSub');
+  const confirmWrap = document.getElementById('confirmWrap');
+  const btn = document.getElementById('btnAuth');
+  if (title) title.textContent = authMode === 'signup' ? '注册新账号' : '登录「衣拍即合」';
+  if (sub) sub.textContent = authMode === 'signup'
+    ? '注册成功后自动登录，可保存衣橱、方案与人群档案'
+    : '登录后可云端保存衣橱、方案与人群档案';
+  confirmWrap?.classList.toggle('hidden', authMode !== 'signup');
+  if (btn) btn.textContent = authMode === 'signup' ? '注册并登录' : '登录';
+  setLoginTip(authMode === 'signup' ? '密码至少 6 位，注册后即可登录' : '未登录也可以先浏览素材');
+}
+
+/** 按登录状态切换界面：不再强制遮挡页面，仅切换导航与云端数据 */
 function applyAuthState(session) {
-  currentUser = (session && session.user) ? session.user : null;
-  document.getElementById('navLogout').classList.toggle('hidden', !currentUser);
-  if (currentUser) {
-    hideLoginModal();
+  const user = (session && session.user) ? session.user : null;
+  const changed = (currentUser && currentUser.id) !== (user && user.id);
+  currentUser = user;
+
+  document.getElementById('navLogin')?.classList.toggle('hidden', !!user);
+  const navUser = document.getElementById('navUser');
+  if (navUser) {
+    navUser.textContent = user ? (user.email || '已登录') : '';
+    navUser.title = user ? (user.email || '') : '';
+    navUser.classList.toggle('hidden', !user);
+  }
+  document.getElementById('navLogout')?.classList.toggle('hidden', !user);
+
+  if (user) {
+    closeAuthModal();
+    if (changed || lastProfileLoadedFor !== user.id) {
+      lastProfileLoadedFor = user.id;
+      onLoginReady();
+    }
   } else {
-    showLoginModal();
-    setLoginTip('请输入已在 Supabase Auth 注册的邮箱与密码');
+    lastProfileLoadedFor = null;
+    renderCloudPanel();
+    setSupabaseTip(CONFIG_READY ? '未登录 · 登录后可读写云端数据' : '未配置云端环境变量，当前仅使用本地功能',
+      CONFIG_READY ? undefined : false);
   }
 }
 
-/** 读写前的登录校验：未登录则阻止操作并弹出登录框 */
-function requireLogin() {
+/** 登录成功后的初始化：拉取人群档案 → 自动写回 → 刷新云端数据 → 执行待处理操作 */
+async function onLoginReady() {
+  if (!currentUser) return;
+  try {
+    await loadCloudProfile();
+    await syncProfile(true);
+    await refreshCloudData();
+    if (pendingAction) {
+      const action = pendingAction;
+      pendingAction = null;
+      action();
+    }
+  } catch (err) {
+    console.error('登录后初始化失败：', err);
+  }
+}
+
+/** 读写前的登录校验：未登录则弹出登录框，登录成功后自动继续 */
+function requireLogin(action) {
   if (currentUser) return true;
-  console.warn('未登录，已阻止本次读写操作');
-  setSupabaseTip('未登录，无法读写数据', false);
-  showLoginModal();
+  pendingAction = typeof action === 'function' ? action : null;
+  openAuthModal('login');
+  setLoginTip('请先登录 / 注册，登录后会自动继续当前保存操作');
   return false;
 }
 
-// 登录表单提交：调用 supabase.auth.signInWithPassword 校验
-document.getElementById('loginForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const email = document.getElementById('loginEmail').value.trim();
-  const password = document.getElementById('loginPassword').value;
-  if (!supabaseClient) {
-    setLoginTip('Supabase 客户端未初始化，无法登录', false);
-    return;
-  }
-  if (!email || !password) {
-    setLoginTip('请输入邮箱和密码', false);
-    return;
-  }
-  const btn = document.getElementById('btnLogin');
-  btn.disabled = true;
-  btn.textContent = '登录中…';
+/* ---- 人群档案：profiles ---- */
+function setPill(field, value) {
+  if (!value) return;
+  const pills = document.querySelectorAll(`.pills[data-field="${field}"] .pill`);
+  let matched = false;
+  pills.forEach(p => {
+    const on = p.textContent.trim() === String(value).trim();
+    p.classList.toggle('active', on);
+    if (on) matched = true;
+  });
+  if (!matched) pills.forEach(p => p.classList.remove('active'));
+}
 
-  const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+function readProfileForm() {
+  return {
+    gender: pick('gender'),
+    age: document.getElementById('age').value,
+    skin: pick('skin'),
+    face: pick('face'),
+    body: pick('body'),
+    style: pick('style'),
+    height: Number(document.getElementById('height').value) || null,
+    weight: Number(document.getElementById('weight').value) || null,
+  };
+}
 
-  btn.disabled = false;
-  btn.textContent = '登录';
+async function loadCloudProfile() {
+  if (!supabaseClient || !currentUser) return null;
+  const { data, error } = await supabaseClient
+    .from('profiles').select('*').eq('id', currentUser.id).maybeSingle();
   if (error) {
-    console.error('登录失败：', error);
-    setLoginTip('登录失败：' + error.message, false);
+    console.error('读取 profiles 失败：', error);
+    setSupabaseTip('读取人群档案失败：' + error.message, false);
+    return null;
+  }
+  if (!data) return null;
+  setPill('gender', data.gender);
+  setPill('skin', data.skin);
+  setPill('face', data.face);
+  setPill('body', data.body);
+  setPill('style', data.style);
+  const ageEl = document.getElementById('age');
+  if (data.age && [...ageEl.options].some(o => o.value === data.age || o.text === data.age)) {
+    ageEl.value = data.age;
+  }
+  if (data.height) document.getElementById('height').value = data.height;
+  if (data.weight) document.getElementById('weight').value = data.weight;
+  return data;
+}
+
+/** 六大人群分类 + 身高体重写入 profiles；登录后自动执行 */
+async function syncProfile(silent) {
+  if (!supabaseClient) return null;
+  if (!currentUser) {
+    if (!silent) openAuthModal('login');
+    return null;
+  }
+  const payload = {
+    id: currentUser.id,
+    email: currentUser.email || null,
+    ...readProfileForm(),
+    updated_at: new Date().toISOString(),
+  };
+  const { error } = await supabaseClient.from('profiles').upsert(payload, { onConflict: 'id' });
+  if (error) {
+    console.error('写入 profiles 失败：', error);
+    setSupabaseTip('人群档案保存失败：' + error.message, false);
+    return null;
+  }
+  setSupabaseTip('人群档案已同步到云端（profiles）', true);
+  return payload;
+}
+
+function scheduleProfileSync() {
+  if (!currentUser) return;
+  clearTimeout(profileTimer);
+  profileTimer = setTimeout(() => syncProfile(true), 500);
+}
+
+function friendlyAuthError(err) {
+  const m = (err && err.message) || String(err || '');
+  if (/Invalid login credentials/i.test(m)) return '邮箱或密码错误，请检查后重试';
+  if (/User already registered/i.test(m)) return '该邮箱已注册，请切换到「登录」';
+  if (/Email not confirmed/i.test(m)) return '邮箱尚未验证：请在 Supabase 后台关闭邮箱验证';
+  if (/Password should be at least/i.test(m)) return '密码至少 6 位';
+  if (/Unable to validate email/i.test(m)) return '邮箱格式不正确';
+  if (/rate limit/i.test(m)) return '操作过于频繁，请稍后再试';
+  return '操作失败：' + m;
+}
+
+/* ---- 登录 / 注册表单 ---- */
+document.querySelectorAll('.auth-tab').forEach(tab => {
+  tab.addEventListener('click', () => setAuthMode(tab.dataset.authTab));
+});
+document.getElementById('authClose')?.addEventListener('click', closeAuthModal);
+document.getElementById('loginModal')?.addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeAuthModal();
+});
+
+document.getElementById('authForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  const password2 = document.getElementById('authPassword2').value;
+  const btn = document.getElementById('btnAuth');
+
+  if (!supabaseClient) {
+    setLoginTip(CONFIG_READY
+      ? 'Supabase 客户端未加载，请检查网络后刷新'
+      : '未配置环境变量：请填写 VITE_SUPABASE_URL 与 VITE_SUPABASE_ANON_KEY', false);
     return;
   }
-  console.log('登录成功：', data.user);
-  setLoginTip('登录成功', true);
-  applyAuthState(data.session);
+  if (!email || !password) { setLoginTip('请输入邮箱和密码', false); return; }
+  if (password.length < 6) { setLoginTip('密码至少 6 位', false); return; }
+  if (authMode === 'signup' && password !== password2) { setLoginTip('两次输入的密码不一致', false); return; }
+
+  btn.disabled = true;
+  btn.textContent = authMode === 'signup' ? '注册中…' : '登录中…';
+  try {
+    if (authMode === 'signup') {
+      const { data, error } = await supabaseClient.auth.signUp({ email, password });
+      if (error) throw error;
+      if (data.session) {
+        setLoginTip('注册成功，已自动登录', true);
+        applyAuthState(data.session);
+      } else {
+        // 邮箱验证开启时 signUp 不返回 session，这里再尝试一次密码登录
+        const { data: loginData, error: loginError } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (loginError) {
+          setLoginTip('注册成功，但需要邮箱验证后才能登录。请在 Supabase 后台关闭邮箱验证。', false);
+        } else {
+          setLoginTip('注册成功，已自动登录', true);
+          applyAuthState(loginData.session);
+        }
+      }
+    } else {
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      setLoginTip('登录成功', true);
+      applyAuthState(data.session);
+    }
+  } catch (err) {
+    console.error('认证失败：', err);
+    setLoginTip(friendlyAuthError(err), false);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = authMode === 'signup' ? '注册并登录' : '登录';
+  }
+});
+
+document.getElementById('navLogin')?.addEventListener('click', () => {
+  openAuthModal('login');
+  setLoginTip(CONFIG_READY
+    ? '请输入邮箱和密码；没有账号请切到「注册」'
+    : '未配置环境变量，登录后也无法读写云端', CONFIG_READY ? undefined : false);
 });
 
 // 退出登录，回到未登录状态
 document.getElementById('navLogout').addEventListener('click', async () => {
-  await supabaseClient.auth.signOut();
-  document.getElementById('loginPassword').value = '';
+  if (supabaseClient) await supabaseClient.auth.signOut();
+  document.getElementById('authPassword').value = '';
+  document.getElementById('authPassword2').value = '';
   applyAuthState(null);
+  setLoginTip('已退出登录');
+  closeAuthModal();
 });
 
-// 启动：读取已有会话，避免刷新后重复登录；CDN 未加载时放行浏览（读写仍被拦截）
+// 启动：读取已有会话；未登录不遮挡页面，仅关闭登录框
 if (supabaseClient) {
   supabaseClient.auth.getSession()
     .then(({ data }) => applyAuthState(data.session))
@@ -857,11 +1118,20 @@ if (supabaseClient) {
       console.error('读取登录状态失败：', err);
       applyAuthState(null);
     });
+  supabaseClient.auth.onAuthStateChange((_event, session) => applyAuthState(session));
 } else {
-  hideLoginModal();
-  setLoginTip('Supabase 客户端未初始化，无法登录', false);
-  console.warn('Supabase CDN 未加载，跳过登录校验（读写功能仍不可用）');
+  applyAuthState(null);
 }
+
+// 六大人群分类与身高体重变化后自动同步到 profiles
+['gender', 'skin', 'face', 'body', 'style'].forEach(field => {
+  document.querySelector(`.pills[data-field="${field}"]`)?.addEventListener('click', scheduleProfileSync);
+});
+document.getElementById('age').addEventListener('change', scheduleProfileSync);
+['height', 'weight'].forEach(id => {
+  document.getElementById(id).addEventListener('input', scheduleProfileSync);
+  document.getElementById(id).addEventListener('change', scheduleProfileSync);
+});
 
 /** 页面测试状态提示 */
 function setSupabaseTip(msg, ok) {
@@ -871,82 +1141,191 @@ function setSupabaseTip(msg, ok) {
   el.style.color = ok === false ? '#dc2626' : ok === true ? 'var(--g2)' : 'var(--muted)';
 }
 
-/** 向 clothes 表插入一条测试数据（user_id 由数据库默认值自动填充） */
-async function saveClothesData() {
-  if (!supabaseClient) {
-    console.error('Supabase 客户端未初始化，请检查 CDN 脚本是否加载成功');
-    setSupabaseTip('写入失败：Supabase CDN 未加载', false);
-    return null;
-  }
-  if (!requireLogin()) return null;
+/* ================= 云端数据：wardrobe_items / outfit_records ================= */
+let lastPlan = null;
+let lastCombos = [];
 
-  // 使用表内已有字段；user_id 交由数据库默认值自动填充，前端不传
-  const testRow = {
-    cloth_name: '测试穿搭 · 简约通勤风',
-    title: '测试穿搭 · 简约通勤风',
-    description: '简约通勤风测试数据，用于验证前端与 Supabase 的写入链路',
-    category: '上衣',
-    color: '米白',
-    image_url: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=800&q=80'
-  };
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
 
-  const { data, error } = await supabaseClient
-    .from('clothes')
-    .insert([testRow])
-    .select();
+/** 把 canvas 压成适合入库的缩略图 dataURL（控制行体积） */
+function canvasThumb(source, max = 360) {
+  const scale = Math.min(1, max / Math.max(source.width, source.height));
+  const c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(source.width * scale));
+  c.height = Math.max(1, Math.round(source.height * scale));
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, c.width, c.height);
+  ctx.drawImage(source, 0, 0, c.width, c.height);
+  return c.toDataURL('image/jpeg', .82);
+}
 
+/** 写入 wardrobe_items：必须登录，user_id 显式使用当前登录用户 */
+async function saveWardrobeItem(item, silent) {
+  if (!supabaseClient) { setWardrobeCloudTip('未配置云端环境变量，仅保存在本地', false); return null; }
+  if (!currentUser) { setWardrobeCloudTip('未登录，仅保存在本地', false); return null; }
+  const { data, error } = await supabaseClient.from('wardrobe_items').insert([{
+    user_id: currentUser.id,
+    name: item.name,
+    category: item.category || null,
+    description: item.description || null,
+    image_url: item.image_url || null,
+  }]).select();
   if (error) {
-    console.error('写入 clothes 表失败：', error);
-    setSupabaseTip('写入失败：' + error.message + '（详见 Console）', false);
+    console.error('写入 wardrobe_items 失败：', error);
+    setWardrobeCloudTip('云端保存失败：' + error.message, false);
     return null;
   }
-
-  console.log('写入 clothes 表成功：', data);
-  setSupabaseTip('写入成功，已插入 1 条测试数据，详见 Console', true);
+  setWardrobeCloudTip('已保存到云端衣橱（wardrobe_items）', true);
+  if (!silent) refreshCloudData();
   return data;
 }
 
-/** 读取 clothes 表全部数据（全部已有字段） */
-async function loadClothesData() {
-  if (!supabaseClient) {
-    console.error('Supabase 客户端未初始化，请检查 CDN 脚本是否加载成功');
-    setSupabaseTip('读取失败：Supabase CDN 未加载', false);
-    return null;
-  }
-  if (!requireLogin()) return null;
-
-  const { data, error } = await supabaseClient
-    .from('clothes')
-    .select('*');
-
+/** 把当前生成的人群穿搭方案 JSON 写入 outfit_records */
+async function savePlanToCloud() {
+  if (!lastPlan) return;
+  if (!requireLogin(savePlanToCloud)) return;
+  if (!supabaseClient) { setLoginTip('未配置云端环境变量，无法保存', false); return; }
+  const { error } = await supabaseClient.from('outfit_records').insert([{
+    user_id: currentUser.id,
+    title: lastPlan.title || '穿搭方案',
+    plan: lastPlan,
+    result_image: null,
+  }]);
   if (error) {
-    console.error('读取 clothes 表失败：', error);
-    setSupabaseTip('读取失败：' + error.message + '（详见 Console）', false);
-    return null;
-  }
-
-  console.log('读取 clothes 表数据：', data);
-  setSupabaseTip('读取成功，共 ' + (data ? data.length : 0) + ' 条数据，详见 Console', true);
-  return data;
-}
-
-// 绑定两个测试按钮
-document.getElementById('btnSaveClothes').addEventListener('click', saveClothesData);
-document.getElementById('btnLoadClothes').addEventListener('click', loadClothesData);
-
-/* ---------- 保存到衣柜：把表单内容插入 clothes 表 ---------- */
-document.getElementById('wardrobeForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-
-  if (!supabaseClient) {
-    alert('保存失败：Supabase 客户端未初始化');
+    console.error('写入 outfit_records 失败：', error);
+    setLoginTip('方案保存失败：' + error.message, false);
+    alert('方案保存失败：' + error.message);
     return;
   }
-  if (!requireLogin()) return;
+  alert('穿搭方案已保存到云端（outfit_records）');
+  refreshCloudData();
+}
+
+/** 把当前智能搭配组合 JSON 写入 outfit_records */
+async function saveCombosToCloud() {
+  if (!lastCombos.length) return;
+  if (!requireLogin(saveCombosToCloud)) return;
+  if (!supabaseClient) { setLoginTip('未配置云端环境变量，无法保存', false); return; }
+  const payload = {
+    type: 'combos',
+    title: `智能搭配组合 · ${lastCombos.length} 套`,
+    created_at: new Date().toISOString(),
+    combos: lastCombos,
+  };
+  const { error } = await supabaseClient.from('outfit_records').insert([{
+    user_id: currentUser.id,
+    title: payload.title,
+    plan: payload,
+    result_image: lastCombos[0]?.image || null,
+  }]);
+  if (error) {
+    console.error('写入 outfit_records 失败：', error);
+    setLoginTip('组合保存失败：' + error.message, false);
+    alert('组合保存失败：' + error.message);
+    return;
+  }
+  alert('搭配组合已保存到云端（outfit_records）');
+  refreshCloudData();
+}
+
+/* ---- 云端数据面板 ---- */
+function renderCloudPanel() {
+  const content = document.getElementById('cloudContent');
+  const status = document.getElementById('cloudStatus');
+  if (!content || !status) return;
+  if (!CONFIG_READY || !supabaseClient) {
+    status.textContent = '未配置云端环境变量，当前仅支持本地功能';
+    content.innerHTML = '<div class="empty-tip">在 v4/.env 中填写 Supabase 配置后即可启用云端保存</div>';
+    return;
+  }
+  if (!currentUser) {
+    status.textContent = '登录后可查看云端衣橱与穿搭方案';
+    content.innerHTML = '<div class="empty-tip">当前未登录，点击右上角「登录 / 注册」</div>';
+    return;
+  }
+  status.textContent = '已登录：' + (currentUser.email || '');
+}
+
+async function refreshCloudData() {
+  renderCloudPanel();
+  const content = document.getElementById('cloudContent');
+  const status = document.getElementById('cloudStatus');
+  if (!content || !status || !supabaseClient || !currentUser) return;
+
+  status.textContent = '正在读取云端数据…';
+  const [profileRes, wardrobeRes, outfitRes] = await Promise.all([
+    supabaseClient.from('profiles').select('*').eq('id', currentUser.id).maybeSingle(),
+    supabaseClient.from('wardrobe_items').select('*').eq('user_id', currentUser.id)
+      .order('created_at', { ascending: false }).limit(60),
+    supabaseClient.from('outfit_records').select('*').eq('user_id', currentUser.id)
+      .order('created_at', { ascending: false }).limit(30),
+  ]);
+
+  if (profileRes.error || wardrobeRes.error || outfitRes.error) {
+    const msg = (profileRes.error || wardrobeRes.error || outfitRes.error).message;
+    status.textContent = '云端读取失败：' + msg;
+    content.innerHTML = '<div class="empty-tip">请确认已执行建表 SQL 并开启 RLS 策略</div>';
+    setSupabaseTip('云端读取失败：' + msg, false);
+    return;
+  }
+
+  const profile = profileRes.data;
+  const wardrobe = wardrobeRes.data || [];
+  const outfits = outfitRes.data || [];
+  const profileLine = profile
+    ? [profile.gender, profile.age, profile.skin, profile.face, profile.body, profile.style].filter(Boolean).join(' · ')
+    : '尚未写入';
+  setSupabaseTip('云端数据已同步 · 衣橱 ' + wardrobe.length + ' 件 · 方案 ' + outfits.length + ' 条', true);
+
+  status.textContent = `云端数据已同步 · 衣橱 ${wardrobe.length} 件 · 方案 ${outfits.length} 条`;
+  content.innerHTML = `
+    <div class="cloud-block">
+      <h3>人群档案（profiles）</h3>
+      <p class="cloud-meta">${escapeHtml(profileLine || '尚未写入')}</p>
+    </div>
+    <div class="cloud-block">
+      <h3>云端衣橱（wardrobe_items · ${wardrobe.length}）</h3>
+      ${wardrobe.length ? `<div class="cloud-grid">${wardrobe.map(it => `
+        <div class="cloud-item">
+          ${it.image_url ? `<img loading="lazy" src="${escapeHtml(it.image_url)}" alt="${escapeHtml(it.name)}">` : ''}
+          <div class="t"><b>${escapeHtml(it.name)}</b><span>${escapeHtml(it.category || '未分类')}</span></div>
+        </div>`).join('')}</div>` : '<p class="empty-tip">还没有云端衣物，上传后会自动同步</p>'}
+    </div>
+    <div class="cloud-block">
+      <h3>穿搭方案（outfit_records · ${outfits.length}）</h3>
+      ${outfits.length ? `<div class="cloud-records">${outfits.map(rec => {
+        const plan = rec.plan || {};
+        const tags = Array.isArray(plan.tags) ? plan.tags : [];
+        return `<div class="cloud-record">
+          ${rec.result_image ? `<img src="${escapeHtml(rec.result_image)}" alt="${escapeHtml(rec.title || '穿搭方案')}">` : ''}
+          <div class="cloud-record-body">
+            <b>${escapeHtml(rec.title || '穿搭方案')}</b>
+            <span class="cloud-time">${new Date(rec.created_at).toLocaleString('zh-CN', { hour12: false })}</span>
+            ${tags.length ? `<div class="mini-tags">${tags.map(t => `<span>${escapeHtml(t)}</span>`).join('')}</div>` : ''}
+          </div>
+        </div>`;
+      }).join('')}</div>` : '<p class="empty-tip">还没有云端方案，生成后点击「保存方案到云端」</p>'}
+    </div>`;
+}
+
+document.getElementById('btnRefreshCloud')?.addEventListener('click', () => {
+  if (!currentUser) { requireLogin(() => refreshCloudData()); return; }
+  refreshCloudData();
+});
+
+/* ---------- 保存到云端衣橱：表单写入 wardrobe_items ---------- */
+document.getElementById('wardrobeForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
 
   const nameEl = document.getElementById('clothName');
   const urlEl = document.getElementById('clothImageUrl');
   const descEl = document.getElementById('clothDesc');
+  const catEl = document.getElementById('clothCategory');
   const name = nameEl.value.trim();
   const imageUrl = urlEl.value.trim();
   const description = descEl.value.trim();
@@ -955,34 +1334,30 @@ document.getElementById('wardrobeForm').addEventListener('submit', async (e) => 
     alert('请先填写衣服名称和衣服图片链接');
     return;
   }
+  if (!CONFIG_READY || !supabaseClient) {
+    alert('云端未配置：请填写 v4/.env 与 v4/env.js 后再保存');
+    return;
+  }
+  if (!requireLogin(() => document.getElementById('wardrobeForm').requestSubmit())) return;
 
   const btn = document.getElementById('btnSaveWardrobe');
   btn.disabled = true;
   btn.textContent = '保存中…';
 
-  // user_id 不传，交由数据库默认值自动填充
-  const { data, error } = await supabaseClient
-    .from('clothes')
-    .insert([{
-      cloth_name: name,
-      title: name,
-      description: description,
-      image_url: imageUrl
-    }])
-    .select();
+  const data = await saveWardrobeItem({
+    name,
+    category: catEl.value,
+    description,
+    image_url: imageUrl,
+  });
 
   btn.disabled = false;
-  btn.textContent = '保存到衣柜';
+  btn.textContent = '保存到云端衣橱';
 
-  if (error) {
-    console.error('保存到衣柜失败：', error);
-    alert('保存失败：' + error.message);
-    return;
+  if (data) {
+    nameEl.value = '';
+    urlEl.value = '';
+    descEl.value = '';
+    alert('已保存到云端衣橱');
   }
-
-  console.log('保存到衣柜成功：', data);
-  nameEl.value = '';
-  urlEl.value = '';
-  descEl.value = '';
-  alert('保存成功！');
 });

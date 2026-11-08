@@ -12,6 +12,8 @@
 </head>
 <body>
 
+<div class="env-banner hidden" id="envBanner"></div>
+
 <nav class="nav">
   <div class="nav-inner">
     <a class="logo" data-go="home">
@@ -27,6 +29,8 @@
       <a class="nav-link" data-go="records">使用记录</a>
       <a class="nav-link" data-go="about">项目介绍</a>
       <button class="btn btn-primary nav-cta" data-go="room">开始搭配</button>
+      <button class="btn btn-outline nav-auth" id="navLogin" type="button">登录 / 注册</button>
+      <span class="nav-user hidden" id="navUser"></span>
       <a class="nav-link hidden" id="navLogout">退出登录</a>
     </div>
   </div>
@@ -36,7 +40,7 @@
   <!-- 首页 -->
   <section class="page active" id="page-home">
     <div class="hero">
-      <span class="hero-badge">AI 穿搭助手 · 照片仅在本地处理</span>
+      <span class="hero-badge">AI 穿搭助手 · 本地预览 · 登录后云端保存</span>
       <h1 class="hero-title">衣拍即合</h1>
       <p class="hero-sub">上传你的衣物照片，智能搭配服饰，获取穿搭、配色、配饰和发型建议，还能为你推荐适合购入的新单品。</p>
       <div class="hero-btns">
@@ -60,7 +64,7 @@
   <section class="page" id="page-room">
     <div class="section">
       <h1 class="page-title">我的搭配室</h1>
-      <p class="section-sub">照片只保存在你的浏览器中，不会上传到任何服务器</p>
+      <p class="section-sub">未登录也能本地预览；登录后可把衣物信息与穿搭方案保存到你的云端账号（仅自己可见）</p>
 
       <div class="step">
         <div class="step-head"><span class="step-no">1</span><h2>我的衣橱</h2><small>上传已有的衣服即可，配饰与发型为非必填</small></div>
@@ -73,6 +77,18 @@
             <input type="text" id="clothName" placeholder="例如：米白针织开衫" required>
           </div>
           <div class="field half">
+            <label for="clothCategory">分类</label>
+            <select id="clothCategory">
+              <option value="top">上装</option>
+              <option value="bottom">下装</option>
+              <option value="outer">外套</option>
+              <option value="shoes">鞋履</option>
+              <option value="acc">配饰</option>
+              <option value="hair">发型</option>
+              <option value="other">其他</option>
+            </select>
+          </div>
+          <div class="field half">
             <label for="clothImageUrl">衣服图片链接</label>
             <input type="url" id="clothImageUrl" placeholder="https://example.com/coat.jpg" required>
           </div>
@@ -80,8 +96,9 @@
             <label for="clothDesc">描述</label>
             <input type="text" id="clothDesc" placeholder="例如：柔软亲肤的细针织，适合春秋通勤叠穿">
           </div>
-          <div class="gen-btns" style="margin:0">
-            <button class="btn btn-primary btn-lg" id="btnSaveWardrobe" type="submit">保存到衣柜</button>
+          <div class="gen-btns" style="margin:0; align-items:center">
+            <button class="btn btn-primary btn-lg" id="btnSaveWardrobe" type="submit">保存到云端衣橱</button>
+            <span class="tip" id="cloudWardrobeTip" style="color:var(--muted); font-size:13px">登录后写入 wardrobe_items</span>
           </div>
         </form>
       </div>
@@ -106,6 +123,7 @@
             <input type="file" id="batchInput" accept="image/*" multiple hidden>
           </label>
           <span class="tip" id="batchTip">建议背景简洁的平铺照片，抠图效果最佳</span>
+          <span class="tip" id="cloudBatchTip">登录后上传会自动同步到云端衣橱</span>
         </div>
         <div class="my-items" id="myItems"></div>
         <div class="gen-btns" style="margin-top:14px">
@@ -136,6 +154,16 @@
           </div>
           <div class="field half">
             <label>体重 (kg)</label><input type="number" id="weight" value="52" min="35" max="150">
+          </div>
+          <div class="field">
+            <label>身材</label>
+            <div class="pills" data-field="body">
+              <button type="button" class="pill active">沙漏形</button>
+              <button type="button" class="pill">梨形</button>
+              <button type="button" class="pill">苹果形</button>
+              <button type="button" class="pill">直筒形</button>
+              <button type="button" class="pill">小个子</button>
+            </div>
           </div>
           <div class="field">
             <label>肤色</label>
@@ -228,7 +256,16 @@
   <section class="page" id="page-records">
     <div class="section">
       <h1 class="page-title">使用记录</h1>
-      <p class="section-sub">记录仅保存在本地浏览器，清除浏览器缓存会清空</p>
+      <p class="section-sub">本地记录保存在浏览器；登录后可在下方查看云端衣橱与穿搭方案</p>
+
+      <h2 class="section-title" style="margin-top:8px">云端数据</h2>
+      <p class="section-sub" id="cloudStatus">登录后查看云端衣橱与穿搭方案</p>
+      <div class="gen-btns">
+        <button class="btn btn-outline" id="btnRefreshCloud" type="button">刷新云端数据</button>
+      </div>
+      <div id="cloudContent"></div>
+
+      <h2 class="section-title" style="margin-top:36px">本地记录</h2>
       <button class="btn btn-outline" id="clearRecords">一键清空全部记录</button>
       <div class="record-list" id="recordList"></div>
     </div>
@@ -246,15 +283,14 @@
         <div class="about-card"><h3>四大功能</h3><p>我的衣橱管理、智能穿搭方案、平铺效果图生成、穿搭灵感与单品购买参考。</p></div>
       </div>
 
-      <!-- Supabase 数据库测试 -->
+      <!-- Supabase 云端数据 -->
       <div class="about-card" style="margin:28px auto 0; max-width:760px">
-        <h3>Supabase 数据库测试</h3>
-        <p>用于验证 <code>clothes</code> 表连通性：「写入测试数据」向已有字段 <code>cloth_name</code> / <code>title</code> / <code>image_url</code> 插入一条测试记录，「读取数据」拉取全部记录。<strong>结果请按 F12 在浏览器 Console 中查看。</strong></p>
+        <h3>云端数据（Supabase）</h3>
+        <p>登录后，人群档案写入 <code>profiles</code>，衣物照片信息写入 <code>wardrobe_items</code>，穿搭方案 JSON 写入 <code>outfit_records</code>；RLS 保证每个账号只能读写自己的数据。未登录时全部本地功能照常可用。</p>
         <div class="gen-btns" style="margin:14px 0 0">
-          <button class="btn btn-primary" id="btnSaveClothes">写入测试数据 saveClothesData()</button>
-          <button class="btn btn-outline" id="btnLoadClothes">读取数据 loadClothesData()</button>
+          <button class="btn btn-primary" data-go="records" type="button">查看云端数据</button>
         </div>
-        <p class="tip" id="supabaseTip" style="color:var(--muted); font-size:13px; margin:10px 0 0">等待操作…</p>
+        <p class="tip" id="supabaseTip" style="color:var(--muted); font-size:13px; margin:10px 0 0">等待检测…</p>
       </div>
 
       <p class="about-note">课程作业项目 · 仅供学习交流</p>
@@ -264,20 +300,30 @@
 
 <footer class="footer">衣拍即合 · 让每一件衣服都拍得其所</footer>
 
-<!-- 登录弹窗：未登录时遮挡页面，登录成功后才展示主页面 -->
-<div class="modal-mask" id="loginModal">
+<!-- 登录 / 注册弹窗：未登录也可关闭并浏览，保存操作时自动唤起 -->
+<div class="modal-mask hidden" id="loginModal">
   <div class="modal login-modal">
+    <button class="modal-close" id="authClose" aria-label="关闭">×</button>
     <div class="modal-body">
-      <h3 class="login-title">登录「衣拍即合」</h3>
-      <p class="login-sub">登录成功后即可读写 Supabase 云端数据</p>
-      <form id="loginForm">
-        <label class="login-label" for="loginEmail">邮箱</label>
-        <input class="login-input" id="loginEmail" type="email" placeholder="you@example.com" autocomplete="username" required>
-        <label class="login-label" for="loginPassword">密码</label>
-        <input class="login-input" id="loginPassword" type="password" placeholder="请输入密码" autocomplete="current-password" required>
-        <button class="btn btn-primary btn-lg login-btn" type="submit" id="btnLogin">登录</button>
+      <div class="auth-tabs">
+        <button class="auth-tab active" type="button" data-auth-tab="login">登录</button>
+        <button class="auth-tab" type="button" data-auth-tab="signup">注册</button>
+      </div>
+      <h3 class="login-title" id="authTitle">登录「衣拍即合」</h3>
+      <p class="login-sub" id="authSub">登录后可云端保存衣橱、方案与人群档案</p>
+      <form id="authForm">
+        <label class="login-label" for="authEmail">邮箱</label>
+        <input class="login-input" id="authEmail" type="email" placeholder="you@example.com" autocomplete="username" required>
+        <label class="login-label" for="authPassword">密码</label>
+        <input class="login-input" id="authPassword" type="password" placeholder="至少 6 位" autocomplete="current-password" required>
+        <div class="hidden" id="confirmWrap">
+          <label class="login-label" for="authPassword2">确认密码</label>
+          <input class="login-input" id="authPassword2" type="password" placeholder="再次输入密码" autocomplete="new-password">
+        </div>
+        <button class="btn btn-primary btn-lg login-btn" type="submit" id="btnAuth">登录</button>
       </form>
-      <p class="tip" id="loginTip">请输入已在 Supabase Auth 注册的邮箱与密码</p>
+      <p class="tip" id="loginTip">未登录也可以先浏览素材</p>
+      <p class="tip login-note">账号由 Supabase Auth 管理；注册成功后自动登录</p>
     </div>
   </div>
 </div>
@@ -290,6 +336,7 @@
   </div>
 </div>
 
+<script src="env.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
